@@ -21,7 +21,8 @@ class HtmlState implements State {
   }
 }
 
-abstract class Widget {}
+abstract class Widget {
+}
 
 abstract class LazyWidget extends Widget {
   Widget build();
@@ -102,75 +103,36 @@ class FixedMap {
   }
 }
 
-class NodeAndWidget {
-  final html.Node node;
-  final Widget widget;
-
-  NodeAndWidget(this.node, this.widget);
-}
-
 class App {
-  App(this.widget, this.container) {
-    if (container != null &&
-        container.children.isNotEmpty &&
-        container.children[0] != null) {
-      _rootElement = container.children[0];
-      _oldNode = _recycleElement(_rootElement);
-    } else {
-      _rootElement = null;
-      _oldNode = null;
-    }
-  }
+  App(this.widget, this.container);
 
   Thunk start() {
     _scheduleRender();
     return _scheduleRender;
   }
 
+  bool _skipRender = false;
   final Widget widget;
   final html.Element container;
-  final List<Thunk> _lifecycle = [];
-
-  html.Node _rootElement;
-  Widget _oldNode;
-
-  bool _isRecycling = true;
-  bool _skipRender = false;
-
-  Element _recycleElement(html.Element element) {
-    return Element(
-      nodeName: element.nodeName.toLowerCase(),
-      attributes: FixedMap.empty,
-      children: element.childNodes.map((element) {
-        return element.nodeType == html.Node.TEXT_NODE
-            ? Text(element.nodeValue)
-            : _recycleElement(element);
-      }).toList(),
-    );
-  }
-
-  Widget _resolveWidget(Widget widget) {
-    if (widget is LazyWidget) {
-      return _resolveWidget(widget.build());
-    } else {
-      return widget;
-    }
-  }
+  X _oldX;
 
   void _render() {
     _skipRender = !_skipRender;
 
-    final Widget node = _resolveWidget(widget);
-
     if (container != null && !_skipRender) {
-      _rootElement = _patch(container, _rootElement, _oldNode, node);
-      _oldNode = node;
-    }
-
-    _isRecycling = false;
-
-    while (_lifecycle.isNotEmpty) {
-      _lifecycle.removeLast()();
+      _oldX = (_oldX == null) ? createFor(widget) : _oldX.update(widget, true);
+      if (container.hasChildNodes()) {
+        final html.Node first = container.firstChild;
+        if (first != _oldX.node) {
+          first.replaceWith(_oldX.node);
+        }
+        while (first.nextNode != null) {
+          first.nextNode.remove();
+        }
+      }
+      else {
+        container.append(_oldX.node);
+      }
     }
   }
 
@@ -180,220 +142,112 @@ class App {
     }
     Timer.run(_render);
   }
+}
 
-  void _updateAttribute(
-      html.Element element, String name, String value, String oldValue) {
-    if (name == "key") {
-      // do nothing
-    } else {
-      element.setAttribute(name, value);
+X createFor(Widget widget) {
+  if (widget is Text) {
+    return X0()
+      ..widget = widget
+      ..node = html.Text(widget.text);
+  } else if (widget is Element) {
+    final html.Element node = html.document.createElement(widget.nodeName);
+    for (final String key in widget.attributes.keys) {
+      node.setAttribute(key, widget.attributes[key]);
     }
-  }
-
-  html.Element _createElement(Element widget) {
-    final html.Element element = html.document.createElement(widget.nodeName);
-    final FixedMap attributes = widget.attributes;
-    if (attributes != null) {
-      if (attributes.containsKey("oncreate")) {
-        _lifecycle.add(() {
-          attributes["oncreate"](element);
-        });
-      }
-
-      for (var i = 0; i < widget.children.length; i++) {
-        final Widget resolved = _resolveWidget(widget.children[i]);
-        widget.children[i] = resolved;
-        if (resolved is Element) {
-          element.append(_createElement(resolved));
-        } else if (resolved is Text) {
-          element.appendText(resolved.text);
-        } else {
-          throw 'Unexpected Widget type ${resolved.runtimeType}';
-        }
-      }
-      for (var key in attributes.keys) {
-        _updateAttribute(element, key, attributes[key], null);
-      }
+    final Xn xn = Xn()
+      ..widget = widget
+      ..node = node
+      ..children = widget.children.map(createFor).toList();
+    for (X x in xn.children) {
+      node.append(x.node);
     }
-    return element;
-  }
-
-  void _updateElement(
-      html.Element element, FixedMap oldAttributes, FixedMap newAttributes) {
-    for (final key in (oldAttributes + newAttributes).keys) {
-      if (newAttributes[key] !=
-          (key == "value" || key == "checked"
-              ? element.getAttribute(key)
-              : oldAttributes[key])) {
-        _updateAttribute(
-          element,
-          key,
-          newAttributes[key],
-          oldAttributes[key],
-        );
-      }
-    }
-
-    var cb =
-        _isRecycling ? newAttributes["oncreate"] : newAttributes["onupdate"];
-    if (cb != null) {
-      _lifecycle.add(() {
-        cb(element, oldAttributes);
-      });
-    }
-  }
-
-  void _removeChildren(html.Node node, Widget widget) {
-    if (widget is Element) {
-      var attributes = widget.attributes;
-      for (var i = 0; i < widget.children.length; i++) {
-        _removeChildren(node.childNodes[i], widget.children[i]);
-      }
-
-      if (attributes.containsKey("ondestroy")) {
-        attributes["ondestroy"](node);
-      }
-    }
-  }
-
-  void _removeElement(html.Node parent, html.Node node, Widget widget) {
-    void done() {
-      _removeChildren(node, widget);
-      node.remove();
-    }
-
-    Function cb = (widget is Element) ? widget.attributes["onremove"] : null;
-    if (cb != null) {
-      cb(node, done);
-    } else {
-      done();
-    }
-  }
-
-  String _getKey(Widget widget) {
-    return widget is Element ? widget.key : null;
-  }
-
-  html.Node _patch(
-    html.Node parent,
-    html.Node node,
-    Widget oldWidget,
-    Widget newWidget,
-  ) {
-    if (newWidget == oldWidget) {
-      // no patching needed
-      return node;
-    } else if (newWidget is Text) {
-      if (node is html.Element) {
-        node.insertAdjacentText("beforeBegin", newWidget.text);
-        node.remove();
-      } else if (node is html.Text) {
-        node.replaceData(0, node.length, newWidget.text);
-      }
-      return null;
-    } else if (newWidget is Element) {
-      return _patchToNewElementWidget(parent, node, oldWidget, newWidget);
-    }
-    throw "Unexpected Widget type ${newWidget.runtimeType}";
-  }
-
-  html.Node _patchToNewElementWidget(
-      html.Node parent, html.Node node, Element oldWidget, Element newWidget) {
-    if (oldWidget == null || oldWidget.nodeName != newWidget.nodeName) {
-      final html.Element newElement = _createElement(newWidget);
-      parent.insertBefore(newElement, node);
-
-      if (oldWidget != null) {
-        _removeElement(parent, node, oldWidget);
-      }
-
-      node = newElement;
-    } else {
-      _updateElement(
-        node,
-        oldWidget.attributes,
-        newWidget.attributes,
-      );
-
-      final oldKeyed = <String, NodeAndWidget>{};
-      final newKeyed = <String, Widget>{};
-      final oldChildWidgets = oldWidget.children;
-      final oldChildNodes = <html.Node>[]..length = oldWidget.children.length;
-      final newChildWidgets = newWidget.children;
-
-      for (var i = 0; i < oldChildWidgets.length; i++) {
-        oldChildNodes[i] = node.childNodes[i];
-
-        final String oldKey = _getKey(oldChildWidgets[i]);
-        if (oldKey != null) {
-          oldKeyed[oldKey] =
-              NodeAndWidget(oldChildNodes[i], oldChildWidgets[i]);
-        }
-      }
-
-      int i = 0;
-      int k = 0;
-
-      while (k < newChildWidgets.length) {
-        final String oldKey = _getKey(oldChildWidgets[i]);
-        final String newKey =
-            _getKey((newChildWidgets[k] = _resolveWidget(newChildWidgets[k])));
-
-        if (newKeyed[oldKey] != null) {
-          i++;
-          continue;
-        }
-
-        if (newKey != null && newKey == _getKey(oldChildWidgets[i + 1])) {
-          if (oldKey == null) {
-            _removeElement(node, oldChildNodes[i], oldChildWidgets[i]);
-          }
-          i++;
-          continue;
-        }
-
-        if (newKey == null || _isRecycling) {
-          if (oldKey == null) {
-            _patch(
-                node, oldChildNodes[i], oldChildWidgets[i], newChildWidgets[k]);
-            k++;
-          }
-          i++;
-        } else {
-          List keyedNode = oldKeyed[newKey] ?? [];
-
-          if (oldKey == newKey) {
-            _patch(node, keyedNode[0], keyedNode[1], newChildWidgets[k]);
-            i++;
-          } else if (keyedNode[0] != null) {
-            _patch(
-              node,
-              node.insertBefore(keyedNode[0], oldChildNodes[i]),
-              keyedNode[1],
-              newChildWidgets[k],
-            );
-          } else {
-            _patch(node, oldChildNodes[i], null, newChildWidgets[k]);
-          }
-
-          newKeyed[newKey] = newChildWidgets[k];
-          k++;
-        }
-      }
-
-      while (i < oldChildWidgets.length) {
-        if (_getKey(oldChildWidgets[i]) == null) {
-          _removeElement(node, oldChildNodes[i], oldChildWidgets[i]);
-        }
-        i++;
-      }
-
-      for (var i in oldKeyed.keys) {
-        if (newKeyed[i] != null) {
-          _removeElement(node, oldKeyed[i].node, oldKeyed[i].widget);
-        }
-      }
-    }
-    return node;
+    return xn;
+  } else if (widget is LazyWidget) {
+    final X1 x1 = X1()
+        ..widget = widget
+        ..child = createFor(widget.build());
+    x1.node = x1.child.node;
+    return x1;
+  } else {
+    throw 'Unknown widget type';
   }
 }
+
+abstract class X {
+  html.Node get node;
+  X update(Widget newWidget, bool mustBuild);
+}
+
+class X0 extends X {
+  Text widget;
+  html.Text node;
+
+  X update(Widget newWidget, bool mustBuild) {
+    if (newWidget == widget) return this;
+    if (newWidget is Text) {
+      final String oldText = widget.text;
+      final String newText = newWidget.text;
+      if (newText != oldText) {
+        int prefix = 0;
+        while (prefix < newText.length && prefix < oldText.length && newText[prefix] == oldText[prefix]) {
+          prefix += 1;
+        }
+        node.replaceData(prefix, oldText.length - prefix, newWidget.text.substring(prefix));
+      }
+      widget = newWidget;
+      return this;
+    } else {
+      return createFor(newWidget);
+    }
+  }
+}
+
+class X1 extends X {
+  LazyWidget widget;
+  html.Node node;
+  X child;
+
+  @override
+  X update(Widget newWidget, bool mustBuild) {
+    if (!mustBuild && newWidget == widget) return this;
+    if (newWidget is LazyWidget) {
+      widget = newWidget;
+      child = child.update(newWidget.build(), false);
+      node = child.node;
+      return this;
+    } else {
+      return createFor(newWidget);
+    }
+  }
+}
+
+class Xn extends X {
+  Element widget;
+  html.Element node;
+  List<X> children;
+
+  X update(Widget newWidget, bool mustBuild) {
+    if (newWidget == widget) return this;
+    if (newWidget is Element && newWidget.nodeName == widget.nodeName) {
+      // TODO assuming new child count equals old child count
+      for (int i = 0; i < children.length; i++) {
+        final X oldChild = children[i];
+        final html.Node oldNode = oldChild.node;
+        final X newChild = oldChild.update(newWidget.children[i], false);
+        final html.Node newNode = newChild.node;
+        if (newNode != oldNode) {
+          oldNode.replaceWith(newNode);
+        }
+        children[i] = newChild;
+      }
+      for (final String key in (widget.attributes + newWidget.attributes).keys) {
+        node.setAttribute(key, newWidget.attributes[key]);
+      }
+      widget = newWidget;
+      return this;
+    } else {
+      return createFor(newWidget);
+    }
+  }
+}
+
