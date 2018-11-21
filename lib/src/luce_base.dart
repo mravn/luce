@@ -1,31 +1,42 @@
 import 'dart:html' as html;
 import 'dart:async';
 
-typedef void Thunk();
+typedef void Listener();
+typedef void RemoveListener();
+typedef RemoveListener AddListener(Listener listener);
 
-abstract class State {
-  void update(Thunk thunk);
-}
+mixin Notification {
+  final List<Listener> _listeners = [];
 
-class HtmlState implements State {
-  Thunk _render;
-
-  @override
-  void update(Thunk thunk) {
-    thunk();
-    if (_render != null) _render();
+  void notifyAll() {
+    for (Listener listener in _listeners) {
+      listener();
+    }
   }
 
-  void wireUp(Widget widget, html.Element element) {
-    _render = App(widget, element).start();
+  RemoveListener notify(Listener listener) {
+    _listeners.add(listener);
+    return () => _listeners.remove(listener);
   }
 }
 
 abstract class Widget {
 }
 
+abstract class BuildParent {
+  void markDirty();
+}
+
+abstract class BuildContext extends BuildParent {
+  void rebuildOn(AddListener addListener);
+}
+
+void wire(Widget widget, html.Element element) {
+  Root(widget, element).markDirty();
+}
+
 abstract class LazyWidget extends Widget {
-  Widget build();
+  Widget build(BuildContext context);
 }
 
 class Text extends Widget {
@@ -103,24 +114,17 @@ class FixedMap {
   }
 }
 
-class App {
-  App(this.widget, this.container);
+class Root extends BuildParent {
+  Root(this.widget, this.container);
 
-  Thunk start() {
-    _scheduleRender();
-    return _scheduleRender;
-  }
-
-  bool _skipRender = false;
   final Widget widget;
   final html.Element container;
   X _oldX;
+  bool _renderPending = false;
 
   void _render() {
-    _skipRender = !_skipRender;
-
-    if (container != null && !_skipRender) {
-      _oldX = (_oldX == null) ? createFor(widget) : _oldX.update(widget, true);
+    if (container != null) {
+      _oldX = (_oldX == null) ? createFor(widget, this) : _oldX.update(widget);
       if (container.hasChildNodes()) {
         final html.Node first = container.firstChild;
         if (first != _oldX.node) {
@@ -136,17 +140,17 @@ class App {
     }
   }
 
-  void _scheduleRender() {
-    if (!_skipRender) {
-      _skipRender = true;
+  @override
+  void markDirty() {
+    if (!_renderPending) {
+      Timer.run(() { _render(); _renderPending = false; });
     }
-    Timer.run(_render);
   }
 }
 
-X createFor(Widget widget) {
+X createFor(Widget widget, BuildParent parent) {
   if (widget is Text) {
-    return X0()
+    return X0(parent)
       ..widget = widget
       ..node = html.Text(widget.text);
   } else if (widget is Element) {
@@ -154,18 +158,18 @@ X createFor(Widget widget) {
     for (final String key in widget.attributes.keys) {
       node.setAttribute(key, widget.attributes[key]);
     }
-    final Xn xn = Xn()
+    final Xn xn = Xn(parent)
       ..widget = widget
-      ..node = node
-      ..children = widget.children.map(createFor).toList();
+      ..node = node;
+    xn.children = widget.children.map((cw) => createFor(cw, xn)).toList();
     for (X x in xn.children) {
       node.append(x.node);
     }
     return xn;
   } else if (widget is LazyWidget) {
-    final X1 x1 = X1()
-        ..widget = widget
-        ..child = createFor(widget.build());
+    final X1 x1 = X1(parent);
+    x1.widget = widget;
+    x1.child = createFor(widget.build(x1), x1);
     x1.node = x1.child.node;
     return x1;
   } else {
@@ -173,17 +177,41 @@ X createFor(Widget widget) {
   }
 }
 
-abstract class X {
+abstract class X extends BuildParent {
+  BuildParent parent;
+
+  X(this.parent);
+
   html.Node get node;
-  X update(Widget newWidget, bool mustBuild);
+  bool isDirty = false;
+
+  X update(Widget newWidget);
+
+  void markDirty() {
+    if (!isDirty) {
+      isDirty = true;
+      if (parent != null) {
+        parent.markDirty();
+      }
+    }
+  }
+
+  BuildParent invalidate() {
+    final BuildParent oldParent = parent;
+    parent = null;
+    return oldParent;
+  }
 }
 
 class X0 extends X {
   Text widget;
   html.Text node;
 
-  X update(Widget newWidget, bool mustBuild) {
-    if (newWidget == widget) return this;
+  X0(BuildParent parent): super(parent);
+
+  X update(Widget newWidget) {
+    if (!isDirty && newWidget == widget) return this;
+    isDirty = false;
     if (newWidget is Text) {
       final String oldText = widget.text;
       final String newText = newWidget.text;
@@ -197,43 +225,84 @@ class X0 extends X {
       widget = newWidget;
       return this;
     } else {
-      return createFor(newWidget);
+      return createFor(newWidget, invalidate());
     }
+  }
+
+  @override
+  BuildParent invalidate() {
+    widget = null;
+    node = null;
+    return super.invalidate();
   }
 }
 
-class X1 extends X {
+class X1 extends X implements BuildContext {
+  final List<RemoveListener> _removeListeners = <RemoveListener>[];
   LazyWidget widget;
   html.Node node;
   X child;
 
+  X1(BuildParent parent): super(parent);
+
   @override
-  X update(Widget newWidget, bool mustBuild) {
-    if (!mustBuild && newWidget == widget) return this;
+  X update(Widget newWidget) {
+    if (!isDirty && newWidget == widget) return this;
+    isDirty = false;
+    removeListeners();
     if (newWidget is LazyWidget) {
       widget = newWidget;
-      child = child.update(newWidget.build(), false);
+      child = child.update(newWidget.build(this));
+      child.parent = this;
       node = child.node;
       return this;
     } else {
-      return createFor(newWidget);
+      return createFor(newWidget, invalidate());
     }
+  }
+
+  void rebuildOn(AddListener addListener) {
+    _removeListeners.add(addListener(markDirty));
+  }
+
+  void removeListeners() {
+    for (RemoveListener removeListener in _removeListeners) {
+      removeListener();
+    }
+    _removeListeners.clear();
+  }
+
+
+  @override
+  BuildParent invalidate() {
+    removeListeners();
+    widget = null;
+    node = null;
+    if (child != null) {
+      child.invalidate();
+      child = null;
+    }
+    return super.invalidate();
   }
 }
 
 class Xn extends X {
+  Xn(BuildParent parent): super(parent);
+
   Element widget;
   html.Element node;
   List<X> children;
 
-  X update(Widget newWidget, bool mustBuild) {
-    if (newWidget == widget) return this;
+  @override
+  X update(Widget newWidget) {
+    if (!isDirty && newWidget == widget) return this;
+    isDirty = false;
     if (newWidget is Element && newWidget.nodeName == widget.nodeName) {
       // TODO assuming new child count equals old child count
       for (int i = 0; i < children.length; i++) {
         final X oldChild = children[i];
         final html.Node oldNode = oldChild.node;
-        final X newChild = oldChild.update(newWidget.children[i], false);
+        final X newChild = oldChild.update(newWidget.children[i]);
         final html.Node newNode = newChild.node;
         if (newNode != oldNode) {
           oldNode.replaceWith(newNode);
@@ -246,8 +315,20 @@ class Xn extends X {
       widget = newWidget;
       return this;
     } else {
-      return createFor(newWidget);
+      return createFor(newWidget, invalidate());
     }
   }
-}
 
+  @override
+  BuildParent invalidate() {
+    widget = null;
+    node = null;
+    if (children != null) {
+      for (final X child in children) {
+        child.invalidate();
+      }
+      children = null;
+    }
+    return super.invalidate();
+  }
+}

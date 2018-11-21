@@ -2,28 +2,22 @@ import 'package:luce/luce.dart';
 import 'dart:html' as html;
 
 void main() {
-  final HtmlState state = HtmlState();
-  final Counter counter = Counter(state);
+  final Counter counter = Counter();
   final Widget widget = CounterWidget(counter);
 
-  state.wireUp(widget, html.querySelector('#output'));
+  wire(widget, html.querySelector('#output'));
 
   html.window.onKeyPress.listen((html.KeyboardEvent event) {
     counter.up();
   });
 }
 
-class Counter {
-  final State state;
-
-  Counter(this.state);
-
+class Counter with Notification {
   int _value = 0;
 
   void up() {
-    state.update(() {
-      _value += 1;
-    });
+    _value += 1;
+    notifyAll();
   }
 
   int get value => _value;
@@ -34,9 +28,11 @@ class CounterWidget extends LazyWidget {
 
   CounterWidget(this.counter);
 
-  Widget build() {
+  Widget build(BuildContext context) {
+    context.rebuildOn(counter.notify);
     return Div(children: [
       Text('Your Dart app is running.'),
+      Br(),
       Text('Counter value is ${counter.value}'),
     ]);
   }
