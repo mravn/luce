@@ -20,11 +20,12 @@ mixin Notification {
   }
 }
 
-abstract class Widget {
-}
+abstract class Widget {}
 
 abstract class BuildParent {
   void markDirty();
+
+  void markDirtyChild();
 }
 
 abstract class BuildContext extends BuildParent {
@@ -71,12 +72,12 @@ class Element extends Widget {
 
 class Div extends Element {
   Div({
-    FixedMap attributes = FixedMap.empty,
+    Map<String, dynamic> attributes = const <String, dynamic>{},
     List<Widget> children = const <Widget>[],
     String key,
   }) : super(
           nodeName: 'div',
-          attributes: attributes,
+          attributes: FixedMap(attributes),
           children: children,
           key: key,
         );
@@ -88,6 +89,10 @@ class Br extends Element {
 
 class FixedMap {
   static const empty = FixedMap._(<String, dynamic>{});
+
+  factory FixedMap(Map<String, dynamic> map) {
+    return FixedMap._(Map.from(map));
+  }
 
   const FixedMap._(this._map);
 
@@ -114,6 +119,20 @@ class FixedMap {
   }
 }
 
+class FixedMapBuilder {
+  Map<String, dynamic> _map = {};
+
+  void put(String key, dynamic value) {
+    _map[key] = value;
+  }
+
+  FixedMap build() {
+    final FixedMap result = FixedMap._(_map);
+    _map = null;
+    return result;
+  }
+}
+
 class Root extends BuildParent {
   Root(this.widget, this.container);
 
@@ -133,8 +152,7 @@ class Root extends BuildParent {
         while (first.nextNode != null) {
           first.nextNode.remove();
         }
-      }
-      else {
+      } else {
         container.append(_oldX.node);
       }
     }
@@ -143,7 +161,20 @@ class Root extends BuildParent {
   @override
   void markDirty() {
     if (!_renderPending) {
-      Timer.run(() { _render(); _renderPending = false; });
+      Timer.run(() {
+        _render();
+        _renderPending = false;
+      });
+    }
+  }
+
+  @override
+  void markDirtyChild() {
+    if (!_renderPending) {
+      Timer.run(() {
+        _render();
+        _renderPending = false;
+      });
     }
   }
 }
@@ -155,8 +186,12 @@ X createFor(Widget widget, BuildParent parent) {
       ..node = html.Text(widget.text);
   } else if (widget is Element) {
     final html.Element node = html.document.createElement(widget.nodeName);
+    final Map<String, String> nodeAttributes = node.attributes;
     for (final String key in widget.attributes.keys) {
-      node.setAttribute(key, widget.attributes[key]);
+      final dynamic value = widget.attributes[key];
+      if (value is String) { // TODO handle lifecycle methods and css
+        nodeAttributes[key] = value;
+      }
     }
     final Xn xn = Xn(parent)
       ..widget = widget
@@ -168,10 +203,10 @@ X createFor(Widget widget, BuildParent parent) {
     return xn;
   } else if (widget is LazyWidget) {
     final X1 x1 = X1(parent);
-    x1.widget = widget;
-    x1.child = createFor(widget.build(x1), x1);
-    x1.node = x1.child.node;
-    return x1;
+    return x1
+      ..widget = widget
+      ..child = createFor(widget.build(x1), x1)
+      ..node = x1.child.node;
   } else {
     throw 'Unknown widget type';
   }
@@ -183,15 +218,29 @@ abstract class X extends BuildParent {
   X(this.parent);
 
   html.Node get node;
+
+  Widget get widget;
+
   bool isDirty = false;
+  bool hasDirtyChild = false;
 
   X update(Widget newWidget);
 
   void markDirty() {
     if (!isDirty) {
       isDirty = true;
+      hasDirtyChild = true;
       if (parent != null) {
-        parent.markDirty();
+        parent.markDirtyChild();
+      }
+    }
+  }
+
+  void markDirtyChild() {
+    if (!hasDirtyChild) {
+      hasDirtyChild = true;
+      if (parent != null) {
+        parent.markDirtyChild();
       }
     }
   }
@@ -207,20 +256,15 @@ class X0 extends X {
   Text widget;
   html.Text node;
 
-  X0(BuildParent parent): super(parent);
+  X0(BuildParent parent) : super(parent);
 
   X update(Widget newWidget) {
-    if (!isDirty && newWidget == widget) return this;
-    isDirty = false;
+    if (newWidget == widget) return this;
     if (newWidget is Text) {
       final String oldText = widget.text;
       final String newText = newWidget.text;
       if (newText != oldText) {
-        int prefix = 0;
-        while (prefix < newText.length && prefix < oldText.length && newText[prefix] == oldText[prefix]) {
-          prefix += 1;
-        }
-        node.replaceData(prefix, oldText.length - prefix, newWidget.text.substring(prefix));
+        node.replaceData(0, oldText.length, newWidget.text);
       }
       widget = newWidget;
       return this;
@@ -243,18 +287,23 @@ class X1 extends X implements BuildContext {
   html.Node node;
   X child;
 
-  X1(BuildParent parent): super(parent);
+  X1(BuildParent parent) : super(parent);
 
   @override
   X update(Widget newWidget) {
-    if (!isDirty && newWidget == widget) return this;
-    isDirty = false;
-    removeListeners();
+    if (!hasDirtyChild && newWidget == widget) return this;
+    hasDirtyChild = false;
     if (newWidget is LazyWidget) {
-      widget = newWidget;
-      child = child.update(newWidget.build(this));
-      child.parent = this;
-      node = child.node;
+      if (!isDirty && newWidget == widget) {
+        child.update(child.widget);
+      } else {
+        isDirty = false;
+        widget = newWidget;
+        removeListeners();
+        child = child.update(newWidget.build(this));
+        child.parent = this;
+        node = child.node;
+      }
       return this;
     } else {
       return createFor(newWidget, invalidate());
@@ -272,7 +321,6 @@ class X1 extends X implements BuildContext {
     _removeListeners.clear();
   }
 
-
   @override
   BuildParent invalidate() {
     removeListeners();
@@ -287,7 +335,7 @@ class X1 extends X implements BuildContext {
 }
 
 class Xn extends X {
-  Xn(BuildParent parent): super(parent);
+  Xn(BuildParent parent) : super(parent);
 
   Element widget;
   html.Element node;
@@ -295,24 +343,94 @@ class Xn extends X {
 
   @override
   X update(Widget newWidget) {
-    if (!isDirty && newWidget == widget) return this;
-    isDirty = false;
+    if (!hasDirtyChild && newWidget == widget) return this;
+    hasDirtyChild = false;
     if (newWidget is Element && newWidget.nodeName == widget.nodeName) {
-      // TODO assuming new child count equals old child count
-      for (int i = 0; i < children.length; i++) {
-        final X oldChild = children[i];
-        final html.Node oldNode = oldChild.node;
-        final X newChild = oldChild.update(newWidget.children[i]);
-        final html.Node newNode = newChild.node;
-        if (newNode != oldNode) {
-          oldNode.replaceWith(newNode);
+      void updateChild(int oldIndex, int newIndex) {
+        final X oldChild = children[oldIndex];
+        final X newChild = oldChild.update(newWidget.children[newIndex]);
+        if (newChild != oldChild) {
+          final html.Node newNode = newChild.node;
+          final html.Node oldNode = oldChild.node;
+          if (newNode != oldNode) {
+            oldNode.replaceWith(newNode);
+          }
+          children[oldIndex] = newChild;
         }
-        children[i] = newChild;
       }
-      for (final String key in (widget.attributes + newWidget.attributes).keys) {
-        node.setAttribute(key, newWidget.attributes[key]);
+
+      void replaceRange(int start, int oldEnd, int newEnd) {
+        int i = start;
+        while (i < oldEnd && i < newEnd) {
+          // reuse as many slots as possible
+          updateChild(i, i);
+          i += 1;
+        }
+        if (i < newEnd) {
+          // insert new nodes
+          final html.Node nodeAfterNewNodes =
+              (i == children.length) ? null : children[i].node;
+          children.insertAll(
+              i,
+              Iterable.generate(
+                newEnd - i,
+                (j) => createFor(newWidget.children[i + j], this),
+              ));
+          node.insertAllBefore(
+            children.sublist(i, newEnd).map((x) => x.node),
+            nodeAfterNewNodes,
+          );
+        } else if (i < oldEnd) {
+          // delete old nodes
+          for (X child in children.sublist(i, oldEnd)) {
+            child.node.remove();
+            child.invalidate();
+          }
+          children.removeRange(i, oldEnd);
+        }
       }
-      widget = newWidget;
+
+      if (newWidget == widget) {
+        for (int i = 0, n = children.length; i < n; i++) {
+          if (children[i].hasDirtyChild) updateChild(i, i);
+        }
+      } else {
+        final int m = newWidget.children.length;
+        final int n = children.length;
+        // preserve prefix with unchanged widgets
+        int i = 0;
+        while (i < m && i < n && newWidget.children[i] == children[i].widget) {
+          if (children[i].hasDirtyChild) updateChild(i, i);
+          i += 1;
+        }
+        // preserve suffix with unchanged widgets
+        int k = 0;
+        while (i < m - 1 - k &&
+            i < n - 1 - k &&
+            newWidget.children[m - 1 - k] == children[n - 1 - k].widget) {
+          k += 1;
+          if (children[n - k].hasDirtyChild) updateChild(n - k, m - k);
+        }
+        // replace old children i..n-k with new children i..m-k
+        replaceRange(i, n - k, m - k);
+        // update attributes and widget
+        final FixedMap oldAttributes = widget.attributes;
+        final FixedMap newAttributes = newWidget.attributes;
+        if (newAttributes != oldAttributes) {
+          final Map<String, String> nodeAttributes = node.attributes;
+          for (final String key in Set.from(newAttributes.keys.followedBy(oldAttributes.keys))) {
+            final dynamic newValue = newAttributes[key];
+            if (oldAttributes[key] != newValue) {
+              if (newValue is! String) {
+                nodeAttributes.remove(key);
+              } else {
+                nodeAttributes[key] = newValue;
+              }
+            }
+          }
+        }
+        widget = newWidget;
+      }
       return this;
     } else {
       return createFor(newWidget, invalidate());

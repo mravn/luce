@@ -1,3 +1,8 @@
+## 0.0.4
+
+- Localized tree rebuild with less rework.
+- Support arbitrary changes to Element child lists.
+
 ## 0.0.3
 
 - Support localized tree rebuild.

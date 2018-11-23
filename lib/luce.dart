@@ -6,6 +6,8 @@ export 'src/luce_base.dart'
         Widget,
         LazyWidget,
         Element,
+        FixedMap,
+        FixedMapBuilder,
         Div,
         Br,
         Text,

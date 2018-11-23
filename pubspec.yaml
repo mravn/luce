@@ -1,8 +1,9 @@
 name: luce
 description: A simplistic reactive web framework.
-version: 0.0.3
+version: 0.0.4
 homepage: https://github.com/mravn/luce
 author: Mikkel Nygaard Ravn <mikkel.nygaard.ravn@gmail.com>
+license: MIT
 
 environment:
   sdk: '>=2.0.0 <3.0.0'
