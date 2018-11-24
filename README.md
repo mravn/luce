@@ -1,3 +1,3 @@
-Tiny web framework inspired by hyperapp and Flutter.
+Luce is a tiny web framework inspired by Flutter.
 
 Work in progress.

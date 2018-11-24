@@ -1,3 +1,8 @@
+## 0.0.5
+
+- Support fake DOM for testing.
+- Various refactoring and renaming.
+
 ## 0.0.4
 
 - Localized tree rebuild with less rework.
