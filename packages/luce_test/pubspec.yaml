@@ -1,13 +1,13 @@
 name: luce_test
 description: Test package for luce apps.
-version: 0.0.1
 homepage: https://github.com/mravn/luce
 author: Mikkel Nygaard Ravn <mikkel.nygaard.ravn@gmail.com>
 license: MIT
+version: 0.0.2
 
 environment:
-  sdk: '>=2.0.0 <3.0.0'
+  sdk: '>=2.1.0 <3.0.0'
 
 dependencies:
   test: ^1.5.1
-  luce: ^0.0.5
+  luce: ^0.0.7

@@ -1,5 +1,6 @@
 abstract class BuildRoot {
   void markDirty();
+
   void markDirtyChild();
 }
 

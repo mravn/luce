@@ -71,13 +71,14 @@ class FakeDom implements luce.Dom<FakeNode, FakeElement, FakeText> {
     _domUpdates += 1;
     node.replaceWith(otherNode);
   }
-  
+
   void clearStats() {
     _nodesCreated = 0;
     _domUpdates = 0;
   }
 
   int get nodesCreated => _nodesCreated;
+
   int get domUpdates => _domUpdates;
 }
 
@@ -94,7 +95,9 @@ class FakeNode {
       return null;
     }
     final int nextIndex = parent.children.indexOf(this) + 1;
-    return nextIndex == parent.children.length ? null : parent.children[nextIndex];
+    return nextIndex == parent.children.length
+        ? null
+        : parent.children[nextIndex];
   }
 
   void append(FakeNode node) {

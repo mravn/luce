@@ -1,3 +1,7 @@
+## 0.0.7
+- Bumped Dart SDK version to 2.1.0.
+- Formatting cleanup.
+
 ## 0.0.6
 
 - Hide private class Xn.

@@ -41,7 +41,8 @@ class RealDom implements luce.Dom<h.Node, h.Element, h.Text> {
   }
 
   @override
-  void insertAllBefore(h.Node parent, Iterable<h.Node> newNodes, h.Node refChild) {
+  void insertAllBefore(
+      h.Node parent, Iterable<h.Node> newNodes, h.Node refChild) {
     parent.insertAllBefore(newNodes, refChild);
   }
 
