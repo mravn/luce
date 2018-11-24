@@ -1,3 +1,7 @@
+## 0.0.6
+
+- Hide private class Xn.
+
 ## 0.0.5
 
 - Support fake DOM for testing.

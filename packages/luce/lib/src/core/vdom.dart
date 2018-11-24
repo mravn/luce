@@ -94,7 +94,7 @@ _X<N, E, T, D> createFor<N, E extends N, T extends N, D extends Dom<N, E, T>>(
         nodeAttributes[key] = value;
       }
     }
-    final Xn<N, E, T, D> xn = Xn<N, E, T, D>(dom, parent)
+    final _Xn<N, E, T, D> xn = _Xn<N, E, T, D>(dom, parent)
       ..widget = widget
       ..node = node;
     xn.children = widget.children
@@ -242,9 +242,9 @@ class _X1<N, E extends N, T extends N, D extends Dom<N, E, T>>
   }
 }
 
-class Xn<N, E extends N, T extends N, D extends Dom<N, E, T>>
+class _Xn<N, E extends N, T extends N, D extends Dom<N, E, T>>
     extends _X<N, E, T, D> {
-  Xn(Dom<N, E, T> dom, BuildRoot parent) : super(dom, parent);
+  _Xn(Dom<N, E, T> dom, BuildRoot parent) : super(dom, parent);
 
   Element widget;
   E node;
