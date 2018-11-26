@@ -1,8 +1,4 @@
-abstract class BuildRoot {
-  void markDirty();
-
-  void markDirtyChild();
-}
+import 'vdom.dart';
 
 abstract class BuildContext extends BuildRoot {
   void rebuildOn(AddListener addListener);

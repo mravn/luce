@@ -1,14 +1,12 @@
 import 'package:test/test.dart';
-import 'package:luce/luce_fake.dart';
+import 'dart:html';
 
 Matcher isText(Matcher textMatcher) => _IsText(textMatcher);
-
-Matcher isElement(String expectedTag) => _IsElement(expectedTag);
-
-Matcher isFakeText(Matcher textMatcher) => _IsFakeText(textMatcher);
-
-Matcher isFakeElement(String expectedTag, Matcher childrenMatcher) =>
-    _IsFakeElement(expectedTag, childrenMatcher);
+Matcher isElement(String expectedTag, [Matcher fieldMatcher = anything]) => _IsElement(expectedTag, fieldMatcher);
+Matcher hasChildren(Matcher childrenMatcher) => _HasChildren(childrenMatcher);
+Matcher hasAttributes(Matcher attributesMatcher) => _HasAttributes(attributesMatcher);
+Matcher hasClasses(Matcher classesMatcher) => _HasClasses(classesMatcher);
+Matcher hasDataset(Matcher datasetMatcher) => _HasDataset(datasetMatcher);
 
 class _IsText extends FeatureMatcher<Text> {
   final Matcher _textMatcher;
@@ -16,58 +14,93 @@ class _IsText extends FeatureMatcher<Text> {
   const _IsText(this._textMatcher);
 
   bool typedMatches(Text item, Map matchState) {
-    return _textMatcher.matches(item.text, matchState);
+    bool b = _textMatcher.matches(item.text, matchState);
+    print('text match: $b');
+    return b;
   }
 
   Description describe(Description description) => description
-      .add('a Text widget with text that ')
-      .addDescriptionOf(_textMatcher);
-}
-
-class _IsFakeText extends FeatureMatcher<FakeText> {
-  final Matcher _textMatcher;
-
-  const _IsFakeText(this._textMatcher);
-
-  bool typedMatches(FakeText item, Map matchState) {
-    return _textMatcher.matches(item.text, matchState);
-  }
-
-  Description describe(Description description) => description
-      .add('a fake Text node with text ')
+      .add('a Text node with text ')
       .addDescriptionOf(_textMatcher);
 }
 
 class _IsElement extends FeatureMatcher<Element> {
   final String _expectedTag;
+  final Matcher _fieldMatcher;
 
-  const _IsElement(this._expectedTag);
+  const _IsElement(this._expectedTag, this._fieldMatcher);
 
   bool typedMatches(Element item, Map matchState) {
-    return item.nodeName == _expectedTag;
+    bool b1 = item.tagName.toLowerCase() == _expectedTag;
+    bool b2 = _fieldMatcher.matches(item, matchState);
+    print('tag match $b1');
+    print('field match $b2');
+    return b1 && b2;
   }
 
   Description describe(Description description) => description
-      .add('an Element widget with tag ')
-      .addDescriptionOf(_expectedTag);
+      .add('an Element with tag ')
+      .addDescriptionOf(_expectedTag)
+      .add(' and ')
+      .addDescriptionOf(_fieldMatcher);
 }
 
-class _IsFakeElement extends FeatureMatcher<FakeElement> {
-  final String _expectedTag;
-  final Matcher _childrenMatcher;
+class _HasChildren extends FeatureMatcher<Element> {
+  final Matcher _matcher;
 
-  const _IsFakeElement(this._expectedTag, this._childrenMatcher);
+  const _HasChildren(this._matcher);
 
-  bool typedMatches(FakeElement item, Map matchState) {
-    return item.tagName == _expectedTag &&
-        _childrenMatcher.matches(item.children, matchState);
+  bool typedMatches(Element item, Map matchState) {
+    bool b = _matcher.matches(item.childNodes, matchState);
+    print('child match $b');
+    return b;
   }
 
   Description describe(Description description) => description
-      .add('an fake Element node with tag ')
-      .addDescriptionOf(_expectedTag)
-      .add('and children ')
-      .addDescriptionOf(_childrenMatcher);
+      .add('children ')
+      .addDescriptionOf(_matcher);
+}
+
+class _HasClasses extends FeatureMatcher<Element> {
+  final Matcher _matcher;
+
+  const _HasClasses(this._matcher);
+
+  bool typedMatches(Element item, Map matchState) {
+    return _matcher.matches(item.classes, matchState);
+  }
+
+  Description describe(Description description) => description
+      .add('classes ')
+      .addDescriptionOf(_matcher);
+}
+
+class _HasDataset extends FeatureMatcher<Element> {
+  final Matcher _matcher;
+
+  const _HasDataset(this._matcher);
+
+  bool typedMatches(Element item, Map matchState) {
+    return _matcher.matches(item.dataset, matchState);
+  }
+
+  Description describe(Description description) => description
+      .add('dataset ')
+      .addDescriptionOf(_matcher);
+}
+
+class _HasAttributes extends FeatureMatcher<Element> {
+  final Matcher _matcher;
+
+  const _HasAttributes(this._matcher);
+
+  bool typedMatches(Element item, Map matchState) {
+    return _matcher.matches(item.attributes, matchState);
+  }
+
+  Description describe(Description description) => description
+      .add('has attributes ')
+      .addDescriptionOf(_matcher);
 }
 
 abstract class FeatureMatcher<T> extends TypeMatcher<T> {

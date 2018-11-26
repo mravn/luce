@@ -1,5 +1,4 @@
-import 'package:luce/luce_html.dart';
-import 'dart:html';
+import 'package:luce/luce.dart';
 
 void main() {
   final Counter counter = Counter();
@@ -30,10 +29,14 @@ class CounterComponent extends Component {
 
   Widget build(BuildContext context) {
     context.rebuildOn(counter.changes);
-    return Div(children: [
-      const Text('Your Luce app is running.'),
+    return Div([
+      const Txt('Your Luce app is running.'),
       const Br(),
-      Text('Counter value is ${counter.value}'),
+      Flag(
+        className: 'high',
+        when: counter.value > 7,
+        child: Txt('Counter value is ${counter.value}'),
+      ),
     ]);
   }
 }

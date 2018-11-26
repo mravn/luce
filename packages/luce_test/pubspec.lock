@@ -144,10 +144,10 @@ packages:
   luce:
     dependency: "direct main"
     description:
-      name: luce
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.0.5"
+      path: "../luce"
+      relative: true
+    source: path
+    version: "0.0.8"
   matcher:
     dependency: transitive
     description:

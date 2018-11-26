@@ -1,3 +1,8 @@
+## 0.0.8
+- Extensive code reorganization.
+- Remove fake DOM.
+- Experiments with Widgets for dynamic attributes.
+
 ## 0.0.7
 - Bumped Dart SDK version to 2.1.0.
 - Formatting cleanup.

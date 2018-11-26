@@ -147,7 +147,7 @@ packages:
       path: "../luce_test"
       relative: true
     source: path
-    version: "0.0.1"
+    version: "0.0.2"
   matcher:
     dependency: transitive
     description:
@@ -303,7 +303,7 @@ packages:
     source: hosted
     version: "1.0.1"
   test:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: test
       url: "https://pub.dartlang.org"

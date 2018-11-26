@@ -1,175 +1,224 @@
 import 'package:luce_test/luce_test.dart';
-import 'package:luce/luce_fake.dart';
 
 void main() {
   group('wire', () {
-    FakeDom dom;
-
     setUp(() {
-      dom = FakeDom();
+      document.body.innerHtml = '';
     });
 
     test('sets top-level text', () async {
-      mount(const Text('hello'), dom);
+      mount(const Txt('hello'), document.body);
 
       await rendering();
 
-      expect(dom.root.children, hasLength(1));
-      expect(dom.root.children[0], isFakeText(equals('hello')));
-      expect(dom.nodesCreated, 1);
-      expect(dom.domUpdates, 1);
+      expect(document.body.childNodes, hasLength(1));
+      expect(document.body.childNodes[0], isText(equals('hello')));
     });
 
     test('sets top-level element', () async {
-      mount(const Div(children: [Text('hello'), Text('world')]), dom);
+      mount(const Div([Txt('hello'), Txt('world')]), document.body);
 
       await rendering();
 
-      expect(dom.root.children, hasLength(1));
+      expect(document.body.children, hasLength(1));
       expect(
-        dom.root.children[0],
-        isFakeElement(
+        document.body.children[0],
+        isElement(
           'div',
-          equals([
-            isFakeText(equals('hello')),
-            isFakeText(equals('world')),
-          ]),
+          hasChildren(equals([
+            isText(equals('hello')),
+            isText(equals('world')),
+          ])),
         ),
       );
-      expect(dom.nodesCreated, 3);
-      expect(dom.domUpdates, 3);
+    });
+
+    test('sets top-level element with intrinsic attributes', () async {
+      mount(const Img(src: 'hello.png'), document.body);
+
+      await rendering();
+
+      expect(document.body.children, hasLength(1));
+      expect(
+        document.body.children[0],
+        isElement('img', hasAttributes(equals({'src': 'hello.png'}))),
+      );
+    });
+
+    test('sets top-level element with supplied attributes', () async {
+      mount(Flag(className: 'hello', when: true, child: Div()), document.body);
+
+      await rendering();
+
+      expect(document.body.children, hasLength(1));
+      expect(
+        document.body.children[0],
+        isElement('div', hasClasses(equals(['hello']))),
+      );
     });
 
     test('sets top-level component', () async {
-      mount(CounterComponent(Counter()), dom);
+      mount(CounterComponent(Counter()), document.body);
 
       await rendering();
 
-      expect(dom.root.children, hasLength(1));
+      expect(document.body.children, hasLength(1));
       expect(
-        dom.root.children[0],
-        isFakeElement(
+        document.body.children[0],
+        isElement(
           'div',
-          equals([
-            isFakeText(equals('hello')),
-            isFakeElement('br', isEmpty),
-            isFakeText(equals('0')),
-          ]),
+          hasChildren(equals([
+            isText(equals('hello')),
+            isElement('br'),
+            isText(equals('0')),
+          ])),
         ),
       );
-      expect(dom.nodesCreated, 4);
-      expect(dom.domUpdates, 4);
     });
 
     test('updates top-level text on remount with other widget', () async {
-      mount(const Text('hello'), dom);
-      await rendering();
-      dom.clearStats();
-
-      mount(const Text('world'), dom);
+      mount(const Txt('hello'), document.body);
       await rendering();
 
-      expect(dom.root.children, hasLength(1));
-      expect(dom.root.children[0], isFakeText(equals('world')));
-      expect(dom.nodesCreated, 1);
-      expect(dom.domUpdates, 1);
+      mount(const Txt('world'), document.body);
+      await rendering();
+
+      expect(document.body.childNodes, hasLength(1));
+      expect(document.body.childNodes[0], isText(equals('world')));
     });
 
     test('updates top-level element on remount', () async {
-      mount(const Div(children: [Text('hello'), Text('world')]), dom);
-      await rendering();
-      dom.clearStats();
+      mount(const Div([Txt('hello'), Txt('world')]), document.body);
 
-      mount(const Text('42'), dom);
+      mount(const Txt('42'), document.body);
       await rendering();
 
-      expect(dom.root.children, hasLength(1));
-      expect(dom.root.children[0], isFakeText(equals('42')));
-      expect(dom.nodesCreated, 1);
-      expect(dom.domUpdates, 1);
+      expect(document.body.childNodes, hasLength(1));
+      expect(document.body.childNodes[0], isText(equals('42')));
     });
 
     test('updates top-level component on state change', () async {
       final Counter counter = Counter();
-      mount(CounterComponent(counter), dom);
-      await rendering();
-      dom.clearStats();
-
-      counter.up();
-      counter.up();
-      await rendering();
-      counter.up();
+      mount(CounterComponent(counter), document.body);
       await rendering();
 
-      expect(dom.root.children, hasLength(1));
+      counter.up();
+      counter.up();
+      await rendering();
+      counter.up();
+      await rendering();
+
+      expect(document.body.children, hasLength(1));
       expect(
-        dom.root.children[0],
-        isFakeElement(
+        document.body.children[0],
+        isElement(
           'div',
-          equals([
+          hasChildren(equals([
             anything,
             anything,
-            isFakeText(equals('3')),
-          ]),
+            isText(equals('3')),
+          ])),
         ),
       );
-      expect(dom.nodesCreated, 0);
-      expect(dom.domUpdates, 2);
     });
 
-    test('updates child appending', () async {
+    test('updates child being appended', () async {
       final Counter counter = Counter();
-      mount(UnaryCounterComponent(counter), dom);
-      await rendering();
-      dom.clearStats();
-
-      counter.up();
-      counter.up();
-      await rendering();
-      counter.up();
+      mount(ListCounterComponent(Counter(), counter), document.body);
       await rendering();
 
-      expect(dom.root.children, hasLength(1));
+      counter.up();
+      counter.up();
+      await rendering();
+      counter.up();
+      await rendering();
+
+      expect(document.body.children, hasLength(1));
       expect(
-        dom.root.children[0],
-        isFakeElement(
+        document.body.children[0],
+        isElement(
           'div',
-          equals([
-            isFakeText(equals('|')),
-            isFakeText(equals('|')),
-            isFakeText(equals('|')),
-          ]),
+          hasChildren(equals([
+            isText(equals('0')),
+            isText(equals('1')),
+            isText(equals('2')),
+          ])),
         ),
       );
-      expect(dom.nodesCreated, 3);
-      expect(dom.domUpdates, 2); // 2+1 nodes appended
     });
 
     test('updates child removal at end', () async {
       final Counter counter = Counter.startingAt(5);
-      mount(UnaryCounterComponent(counter), dom);
-      await rendering();
-      dom.clearStats();
-
-      counter.down();
-      counter.down();
-      await rendering();
-      counter.down();
+      mount(ListCounterComponent(Counter(), counter), document.body);
       await rendering();
 
-      expect(dom.root.children, hasLength(1));
+      counter.down();
+      counter.down();
+      await rendering();
+      counter.down();
+      await rendering();
+
+      expect(document.body.children, hasLength(1));
       expect(
-        dom.root.children[0],
-        isFakeElement(
+        document.body.children[0],
+        isElement(
           'div',
-          equals([
-            isFakeText(equals('|')),
-            isFakeText(equals('|')),
-          ]),
+          hasChildren(equals([
+            isText(equals('0')),
+            isText(equals('1')),
+          ])),
         ),
       );
-      expect(dom.nodesCreated, 0);
-      expect(dom.domUpdates, 3); // 3 nodes removed
+    });
+
+    test('updates child insertion at start', () async {
+      final Counter counter = Counter.startingAt(5);
+      mount(ListCounterComponent(counter, Counter.startingAt(6)), document.body);
+      await rendering();
+
+      counter.down();
+      counter.down();
+      await rendering();
+      counter.down();
+      await rendering();
+
+      expect(document.body.children, hasLength(1));
+      expect(
+        document.body.children[0],
+        isElement(
+          'div',
+          hasChildren(equals([
+            isText(equals('2')),
+            isText(equals('3')),
+            isText(equals('4')),
+            isText(equals('5')),
+          ])),
+        ),
+      );
+    });
+
+    test('updates child removal at start', () async {
+      final Counter counter = Counter();
+      mount(ListCounterComponent(counter, Counter.startingAt(5)), document.body);
+      await rendering();
+
+      counter.up();
+      counter.up();
+      await rendering();
+      counter.up();
+      await rendering();
+
+      expect(document.body.children, hasLength(1));
+      expect(
+        document.body.children[0],
+        isElement(
+          'div',
+          hasChildren(equals([
+            isText(equals('3')),
+            isText(equals('4')),
+          ])),
+        ),
+      );
     });
   });
 }
@@ -182,10 +231,10 @@ class CounterComponent extends Component {
   @override
   Widget build(BuildContext context) {
     context.rebuildOn(counter.changes);
-    return Div(children: [
-      const Text('hello'),
+    return Div([
+      const Txt('hello'),
       const Br(),
-      Text('${counter.value}'),
+      Txt('${counter.value}'),
     ]);
   }
 }
@@ -210,14 +259,39 @@ class Counter with ChangeNotification {
   int get value => _value;
 }
 
-class UnaryCounterComponent extends Component {
-  final Counter counter;
+const Txt zero = Txt('0');
+const Txt one = Txt('1');
+const Txt two = Txt('2');
+const Txt three = Txt('3');
+const Txt four = Txt('4');
+const Txt five = Txt('5');
+const Txt six = Txt('6');
+const Txt seven = Txt('7');
+const Txt eight = Txt('8');
+const Txt nine = Txt('9');
+const List<Txt> numbers = [
+  zero,
+  one,
+  two,
+  three,
+  four,
+  five,
+  six,
+  seven,
+  eight,
+  nine,
+];
 
-  const UnaryCounterComponent(this.counter);
+class ListCounterComponent extends Component {
+  final Counter startCounter;
+  final Counter endCounter;
+
+  const ListCounterComponent(this.startCounter, this.endCounter);
 
   @override
   Widget build(BuildContext context) {
-    context.rebuildOn(counter.changes);
-    return Div(children: List.filled(counter.value, const Text('|')));
+    context.rebuildOn(startCounter.changes);
+    context.rebuildOn(endCounter.changes);
+    return Div(numbers.sublist(startCounter.value, endCounter.value));
   }
 }
