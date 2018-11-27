@@ -11,3 +11,4 @@ environment:
 dependencies:
   test: ^1.5.1
   luce: ^0.0.9
+  meta: ^1.1.6
