@@ -28,21 +28,22 @@ class Tag extends Widget {
 
 class VTag extends VNode {
   VTag(this.widget, BuildRoot parent) : super(parent) {
-    node = document.createElement(widget.tag);
+    element = document.createElement(widget.tag);
     widget
-      ..applyAttributes(node.attributes)
-      ..applyClasses(node.classes)
-      ..applyData(node.dataset);
+      ..applyAttributes(element.attributes)
+      ..applyClasses(element.classes)
+      ..applyData(element.dataset);
     children = widget.children.map((Widget w) => w.createVNode(this)).toList();
     if (children.isNotEmpty) {
-      node.insertAllBefore(children.map((VNode child) => child.node), null);
+      element.insertAllBefore(
+          children.map((VNode child) => child.node), null);
     }
   }
 
   @override
   Tag widget;
   @override
-  Element node;
+  Element element;
   List<VNode> children;
 
   @override
@@ -68,26 +69,26 @@ class VTag extends VNode {
       void replaceRange(int start, int oldEnd, int newEnd) {
         int i = start;
         while (i < oldEnd && i < newEnd) {
-          // reuse as many slots as possible
+          // Reuse as many slots as possible.
           updateChild(i, i);
           i += 1;
         }
         if (i < newEnd) {
           final Node refChild =
               (i == children.length) ? null : children[i].node;
-          // insert new nodes
+          // Insert necessary new nodes.
           children.insertAll(
               i,
               Iterable<VNode>.generate(
                 newEnd - i,
                 (int j) => newWidget.children[i + j].createVNode(this),
               ));
-          node.insertAllBefore(
+          element.insertAllBefore(
             children.sublist(i, newEnd).map((VNode child) => child.node),
             refChild,
           );
         } else if (i < oldEnd) {
-          // delete old nodes
+          // Delete superfluous old nodes.
           for (final VNode child in children.sublist(i, oldEnd)) {
             child.node.remove();
             child.invalidate();
@@ -97,9 +98,9 @@ class VTag extends VNode {
       }
 
       newWidget
-        ..applyAttributes(node.attributes)
-        ..applyClasses(node.classes)
-        ..applyData(node.dataset);
+        ..applyAttributes(element.attributes)
+        ..applyClasses(element.classes)
+        ..applyData(element.dataset);
       if (newWidget == widget) {
         final int n = children.length;
         for (int i = 0; i < n; i++) {
@@ -110,10 +111,8 @@ class VTag extends VNode {
       } else {
         final int m = newWidget.children.length;
         final int n = children.length;
-        print('new child count $m');
-        print('old child count $n');
 
-        // preserve prefix with unchanged widgets
+        // Preserve prefix with unchanged widgets.
         int i = 0;
         while (i < m && i < n && newWidget.children[i] == children[i].widget) {
           if (children[i].hasDirtyChild) {
@@ -121,9 +120,7 @@ class VTag extends VNode {
           }
           i += 1;
         }
-        print('preserved prefix length: $i');
-
-        // preserve suffix with unchanged widgets
+        // Preserve suffix with unchanged widgets.
         int k = 0;
         while (i + k < m &&
             i + k < n &&
@@ -133,12 +130,9 @@ class VTag extends VNode {
             updateChild(n - k, m - k);
           }
         }
-        print('preserved suffix length: $k');
-
-        // replace old children i..n-k with new children i..m-k
+        // Replace old children i..n-k with new children i..m-k.
         replaceRange(i, n - k, m - k);
 
-        // update attributes and widget
         widget = newWidget;
       }
       return this;
@@ -150,7 +144,7 @@ class VTag extends VNode {
   @override
   BuildRoot invalidate() {
     widget = null;
-    node = null;
+    element = null;
     if (children != null) {
       for (final VNode child in children) {
         child.invalidate();
@@ -189,6 +183,21 @@ class Div extends Tag {
           tag: 'div',
           children: children,
         );
+}
+
+class FocusableDiv extends Tag {
+  const FocusableDiv(this.tabIndex, [List<Widget> children = const <Widget>[]])
+      : super(
+          tag: 'div',
+          children: children,
+        );
+
+  final int tabIndex;
+
+  @override
+  void applyAttributes(Map<String, String> attributes) {
+    _setAttribute(attributes, 'tabIndex', tabIndex?.toString());
+  }
 }
 
 class Br extends Tag {

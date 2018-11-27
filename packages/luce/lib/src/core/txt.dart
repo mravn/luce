@@ -15,13 +15,29 @@ class Txt extends Widget {
 
 class VText extends VNode {
   VText(this.widget, BuildRoot parent) : super(parent) {
-    node = Text(widget.text);
+    text = Text(widget.text);
   }
 
   @override
   Txt widget;
   @override
-  Text node;
+  Element get element {
+    if (_span == null) {
+      _span = document.createElement('span');
+      final Element parent = text.parent;
+      if (parent != null) {
+        text.replaceWith(_span);
+      }
+      _span.append(text);
+    }
+    return _span;
+  }
+  Element _span;
+
+  @override
+  Node get node => _span ?? text;
+
+  Text text;
 
   @override
   VNode update(Widget newWidget) {
@@ -32,7 +48,7 @@ class VText extends VNode {
       final String newText = newWidget.text;
       final String oldText = widget.text;
       if (newText != oldText) {
-        node.replaceData(0, oldText.length, newWidget.text);
+        text.replaceData(0, oldText.length, newWidget.text);
       }
       widget = newWidget;
       return this;
@@ -44,7 +60,8 @@ class VText extends VNode {
   @override
   BuildRoot invalidate() {
     widget = null;
-    node = null;
+    _span = null;
+    text = null;
     return super.invalidate();
   }
 }

@@ -1,3 +1,7 @@
+## 0.0.10
+- Begun mouse and keyboard event support.
+- On-the-fly wrapping of Text nodes in Span elements as needed.
+
 ## 0.0.9
 - Introduce more linter rules.
 

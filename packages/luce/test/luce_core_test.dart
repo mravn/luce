@@ -50,7 +50,7 @@ void main() {
 
     test('sets top-level element with supplied attributes', () async {
       mount(
-        Flag(className: 'hello', when: true, child: const Div()),
+        const Flag(className: 'hello', child: Div()),
         document.body,
       );
 
@@ -63,8 +63,29 @@ void main() {
       );
     });
 
-    test('sets top-level component', () async {
-      mount(CounterComponent(Counter()), document.body);
+    test('sets top-level text with supplied attributes, wrap', () async {
+      mount(
+        const Flag(className: 'hello', child: Txt('world')),
+        document.body,
+      );
+
+      await rendering();
+
+      expect(document.body.children, hasLength(1));
+      expect(
+        document.body.children[0],
+        isElement(
+          'span',
+          allOf(
+            hasClasses(contains('hello')),
+            hasChildren(contains(isText(equals('world')))),
+          ),
+        ),
+      );
+    });
+
+    test('sets top-level component with element child', () async {
+      mount(CounterComponent(Counter.startingAt(42)), document.body);
 
       await rendering();
 
@@ -76,9 +97,21 @@ void main() {
           hasChildren(equals(<Matcher>[
             isText(equals('hello')),
             isElement('br'),
-            isText(equals('0')),
+            isText(equals('42')),
           ])),
         ),
+      );
+    });
+
+    test('sets top-level component with text child', () async {
+      mount(TextCounterComponent(Counter.startingAt(7)), document.body);
+
+      await rendering();
+
+      expect(document.body.childNodes, hasLength(1));
+      expect(
+        document.body.childNodes[0],
+        isText(equals('7')),
       );
     });
 
@@ -296,4 +329,13 @@ class ListCounterComponent extends Component {
     context..rebuildOn(startCounter.changes)..rebuildOn(endCounter.changes);
     return Div(numbers.sublist(startCounter.value, endCounter.value));
   }
+}
+
+class TextCounterComponent extends Component {
+  TextCounterComponent(this.counter);
+
+  final Counter counter;
+
+  @override
+  Widget build(BuildContext context) => Txt('${counter.value}');
 }

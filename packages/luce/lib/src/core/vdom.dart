@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:html' as html;
+import 'dart:html';
 
-void mount(Widget widget, html.Element container) {
+void mount(Widget widget, Element container) {
   _BuildRoot(widget, container).markDirty();
 }
 
@@ -21,7 +21,7 @@ class _BuildRoot extends BuildRoot {
   _BuildRoot(this.widget, this.container) : assert(widget != null);
 
   final Widget widget;
-  final html.Element container;
+  final Element container;
   VNode _oldRootVNode;
   bool _renderPending = false;
 
@@ -31,7 +31,7 @@ class _BuildRoot extends BuildRoot {
           ? widget.createVNode(this)
           : _oldRootVNode.update(widget);
       if (container.hasChildNodes()) {
-        final html.Node first = container.firstChild;
+        final Node first = container.firstChild;
         if (first != _oldRootVNode.node) {
           first.replaceWith(_oldRootVNode.node);
         }
@@ -65,8 +65,8 @@ abstract class VNode extends BuildRoot {
 
   BuildRoot parent;
 
-  html.Node get node;
-
+  Element get element;
+  Node get node => element;
   Widget get widget;
 
   bool isDirty = false;
@@ -102,13 +102,13 @@ abstract class VNode extends BuildRoot {
   }
 }
 
-abstract class VSingleChildNode<W extends Widget> extends VNode {
-  VSingleChildNode(this.widget, BuildRoot parent) : super(parent);
+abstract class VSingleChildElement<W extends Widget> extends VNode {
+  VSingleChildElement(this.widget, BuildRoot parent) : super(parent);
 
   @override
   W widget;
   @override
-  html.Element node;
+  Element element;
   VNode child;
 
   @override
@@ -123,8 +123,8 @@ abstract class VSingleChildNode<W extends Widget> extends VNode {
       } else {
         isDirty = false;
         widget = newWidget;
-        child = updateAndReturnChild(newWidget)..parent = this;
-        node = child.node;
+        child = updateAndReturnNewChild(newWidget)..parent = this;
+        element = child.element;
       }
       return this;
     } else {
@@ -132,12 +132,12 @@ abstract class VSingleChildNode<W extends Widget> extends VNode {
     }
   }
 
-  VNode updateAndReturnChild(W newWidget);
+  VNode updateAndReturnNewChild(W newWidget);
 
   @override
   BuildRoot invalidate() {
     widget = null;
-    node = null;
+    element = null;
     if (child != null) {
       child.invalidate();
       child = null;

@@ -1,3 +1,5 @@
+import 'dart:html';
+
 import 'vdom.dart';
 
 class Attributes extends Widget {
@@ -14,17 +16,24 @@ class Attributes extends Widget {
   String toString() => '$runtimeType[$child]';
 }
 
-class VAttributes extends VSingleChildNode<Attributes> {
+class VAttributes extends VSingleChildElement<Attributes> {
   VAttributes(Attributes widget, BuildRoot parent) : super(widget, parent) {
-    child = widget.child.createVNode(parent);
-    node = child.node;
-    widget.applyAttributes(node.attributes);
+    child = widget.child.createVNode(this);
+    element = child.element;
+    _applyAttributes(widget, element);
   }
 
   @override
-  VNode updateAndReturnChild(Attributes newWidget) {
-    newWidget.applyAttributes(node.attributes);
-    return child.update(newWidget.child);
+  VNode updateAndReturnNewChild(Attributes newWidget) {
+    final VNode newChild = child.update(newWidget.child);
+    if (newChild != child) {
+      _applyAttributes(newWidget, newChild.element);
+    }
+    return newChild;
+  }
+
+  void _applyAttributes(Attributes widget, Element element) {
+    widget.applyAttributes(element.dataset);
   }
 }
 
@@ -42,17 +51,24 @@ class Dataset extends Widget {
   String toString() => '$runtimeType[$child]';
 }
 
-class VDataset extends VSingleChildNode<Dataset> {
+class VDataset extends VSingleChildElement<Dataset> {
   VDataset(Dataset widget, BuildRoot parent) : super(widget, parent) {
-    child = widget.child.createVNode(parent);
-    node = child.node;
-    widget.applyDataset(node.dataset);
+    child = widget.child.createVNode(this);
+    element = child.element;
+    _applyDataset(widget, element);
   }
 
   @override
-  VNode updateAndReturnChild(Dataset newWidget) {
-    newWidget.applyDataset(node.dataset);
-    return child.update(newWidget.child);
+  VNode updateAndReturnNewChild(Dataset newWidget) {
+    final VNode newChild = child.update(newWidget.child);
+    if (newChild != child) {
+      _applyDataset(newWidget, newChild.element);
+    }
+    return newChild;
+  }
+
+  void _applyDataset(Dataset widget, Element element) {
+    widget.applyDataset(element.dataset);
   }
 }
 
@@ -70,24 +86,31 @@ class Classes extends Widget {
   String toString() => '$runtimeType[$child]';
 }
 
-class VClasses extends VSingleChildNode<Classes> {
+class VClasses extends VSingleChildElement<Classes> {
   VClasses(Classes widget, BuildRoot parent) : super(widget, parent) {
-    child = widget.child.createVNode(parent);
-    node = child.node;
-    widget.applyClasses(node.classes);
+    child = widget.child.createVNode(this);
+    element = child.element;
+    _applyClasses(widget, element);
   }
 
   @override
-  VNode updateAndReturnChild(Classes newWidget) {
-    newWidget.applyClasses(node.classes);
-    return child.update(newWidget.child);
+  VNode updateAndReturnNewChild(Classes newWidget) {
+    final VNode newChild = child.update(newWidget.child);
+    if (newChild != child) {
+      _applyClasses(newWidget, newChild.element);
+    }
+    return newChild;
+  }
+
+  void _applyClasses(Classes widget, Element element) {
+    widget.applyClasses(element.classes);
   }
 }
 
 class Flag extends Classes {
-  Flag({
+  const Flag({
     this.className,
-    this.when,
+    this.when = true,
     Widget child,
   }) : super(child);
 
