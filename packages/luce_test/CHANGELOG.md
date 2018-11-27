@@ -1,3 +1,7 @@
+## 0.0.4
+
+- Introduce more linter rules.
+
 ## 0.0.3
 
 - Updates for Luce 0.0.8.

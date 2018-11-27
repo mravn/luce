@@ -1,43 +1,46 @@
-import 'package:test/test.dart';
 import 'dart:html';
+import 'package:test/test.dart';
 
 Matcher isText(Matcher textMatcher) => _IsText(textMatcher);
-Matcher isElement(String expectedTag, [Matcher fieldMatcher = anything]) => _IsElement(expectedTag, fieldMatcher);
+
+Matcher isElement(String expectedTag, [Matcher fieldMatcher = anything]) =>
+    _IsElement(expectedTag, fieldMatcher);
+
 Matcher hasChildren(Matcher childrenMatcher) => _HasChildren(childrenMatcher);
-Matcher hasAttributes(Matcher attributesMatcher) => _HasAttributes(attributesMatcher);
+
+Matcher hasAttributes(Matcher attributesMatcher) =>
+    _HasAttributes(attributesMatcher);
+
 Matcher hasClasses(Matcher classesMatcher) => _HasClasses(classesMatcher);
+
 Matcher hasDataset(Matcher datasetMatcher) => _HasDataset(datasetMatcher);
 
 class _IsText extends FeatureMatcher<Text> {
-  final Matcher _textMatcher;
-
   const _IsText(this._textMatcher);
 
-  bool typedMatches(Text item, Map matchState) {
-    bool b = _textMatcher.matches(item.text, matchState);
-    print('text match: $b');
-    return b;
-  }
+  final Matcher _textMatcher;
 
-  Description describe(Description description) => description
-      .add('a Text node with text ')
-      .addDescriptionOf(_textMatcher);
+  @override
+  bool typedMatches(Text item, Map<dynamic, dynamic> matchState) =>
+      _textMatcher.matches(item.text, matchState);
+
+  @override
+  Description describe(Description description) =>
+      description.add('a Text node with text ').addDescriptionOf(_textMatcher);
 }
 
 class _IsElement extends FeatureMatcher<Element> {
+  const _IsElement(this._expectedTag, this._fieldMatcher);
+
   final String _expectedTag;
   final Matcher _fieldMatcher;
 
-  const _IsElement(this._expectedTag, this._fieldMatcher);
+  @override
+  bool typedMatches(Element item, Map<dynamic, dynamic> matchState) =>
+      item.tagName.toLowerCase() == _expectedTag &&
+      _fieldMatcher.matches(item, matchState);
 
-  bool typedMatches(Element item, Map matchState) {
-    bool b1 = item.tagName.toLowerCase() == _expectedTag;
-    bool b2 = _fieldMatcher.matches(item, matchState);
-    print('tag match $b1');
-    print('field match $b2');
-    return b1 && b2;
-  }
-
+  @override
   Description describe(Description description) => description
       .add('an Element with tag ')
       .addDescriptionOf(_expectedTag)
@@ -46,82 +49,83 @@ class _IsElement extends FeatureMatcher<Element> {
 }
 
 class _HasChildren extends FeatureMatcher<Element> {
-  final Matcher _matcher;
-
   const _HasChildren(this._matcher);
 
-  bool typedMatches(Element item, Map matchState) {
-    bool b = _matcher.matches(item.childNodes, matchState);
-    print('child match $b');
-    return b;
-  }
+  final Matcher _matcher;
 
-  Description describe(Description description) => description
-      .add('children ')
-      .addDescriptionOf(_matcher);
+  @override
+  bool typedMatches(Element item, Map<dynamic, dynamic> matchState) =>
+      _matcher.matches(item.childNodes, matchState);
+
+  @override
+  Description describe(Description description) =>
+      description.add('children ').addDescriptionOf(_matcher);
 }
 
 class _HasClasses extends FeatureMatcher<Element> {
-  final Matcher _matcher;
-
   const _HasClasses(this._matcher);
 
-  bool typedMatches(Element item, Map matchState) {
-    return _matcher.matches(item.classes, matchState);
-  }
+  final Matcher _matcher;
 
-  Description describe(Description description) => description
-      .add('classes ')
-      .addDescriptionOf(_matcher);
+  @override
+  bool typedMatches(Element item, Map<dynamic, dynamic> matchState) =>
+      _matcher.matches(item.classes, matchState);
+
+  @override
+  Description describe(Description description) =>
+      description.add('classes ').addDescriptionOf(_matcher);
 }
 
 class _HasDataset extends FeatureMatcher<Element> {
-  final Matcher _matcher;
-
   const _HasDataset(this._matcher);
 
-  bool typedMatches(Element item, Map matchState) {
-    return _matcher.matches(item.dataset, matchState);
-  }
+  final Matcher _matcher;
 
-  Description describe(Description description) => description
-      .add('dataset ')
-      .addDescriptionOf(_matcher);
+  @override
+  bool typedMatches(Element item, Map<dynamic, dynamic> matchState) =>
+      _matcher.matches(item.dataset, matchState);
+
+  @override
+  Description describe(Description description) =>
+      description.add('dataset ').addDescriptionOf(_matcher);
 }
 
 class _HasAttributes extends FeatureMatcher<Element> {
-  final Matcher _matcher;
-
   const _HasAttributes(this._matcher);
 
-  bool typedMatches(Element item, Map matchState) {
-    return _matcher.matches(item.attributes, matchState);
-  }
+  final Matcher _matcher;
 
-  Description describe(Description description) => description
-      .add('has attributes ')
-      .addDescriptionOf(_matcher);
+  @override
+  bool typedMatches(Element item, Map<dynamic, dynamic> matchState) =>
+      _matcher.matches(item.attributes, matchState);
+
+  @override
+  Description describe(Description description) =>
+      description.add('has attributes ').addDescriptionOf(_matcher);
 }
 
 abstract class FeatureMatcher<T> extends TypeMatcher<T> {
   const FeatureMatcher();
 
-  bool matches(item, Map matchState) =>
+  @override
+  bool matches(dynamic item, Map<dynamic, dynamic> matchState) =>
       super.matches(item, matchState) && typedMatches(item, matchState);
 
-  bool typedMatches(T item, Map matchState);
+  bool typedMatches(T item, Map<dynamic, dynamic> matchState);
 
-  Description describeMismatch(
-      item, Description mismatchDescription, Map matchState, bool verbose) {
+  @override
+  Description describeMismatch(dynamic item, Description mismatchDescription,
+      Map<dynamic, dynamic> matchState, bool verbose) {
     if (item is T) {
-      return describeTypedMismatch(
-          item, mismatchDescription, matchState, verbose);
+      return describeTypedMismatch(item, mismatchDescription, matchState,
+          verbose: verbose);
     }
 
     return super.describe(mismatchDescription.add('not an '));
   }
 
   Description describeTypedMismatch(T item, Description mismatchDescription,
-          Map matchState, bool verbose) =>
+          Map<dynamic, dynamic> matchState,
+          {bool verbose}) =>
       mismatchDescription;
 }

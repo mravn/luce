@@ -23,13 +23,14 @@ class Counter with ChangeNotification {
 }
 
 class CounterComponent extends Component {
-  final Counter counter;
-
   CounterComponent(this.counter);
 
+  final Counter counter;
+
+  @override
   Widget build(BuildContext context) {
     context.rebuildOn(counter.changes);
-    return Div([
+    return Div(<Widget>[
       const Txt('Your Luce app is running.'),
       const Br(),
       Flag(

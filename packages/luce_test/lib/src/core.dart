@@ -1,3 +1,3 @@
 import 'dart:async';
 
-Future<void> rendering() => Future.delayed(Duration.zero, null);
+Future<void> rendering() => Future<void>.delayed(Duration.zero, null);

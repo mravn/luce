@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:html' as html;
 
 void mount(Widget widget, html.Element container) {
-  _BuildRoot(widget, container)..markDirty();
+  _BuildRoot(widget, container).markDirty();
 }
 
 abstract class Widget {
@@ -18,8 +18,7 @@ abstract class BuildRoot {
 }
 
 class _BuildRoot extends BuildRoot {
-  _BuildRoot(this.widget, this.container)
-      : assert(widget != null);
+  _BuildRoot(this.widget, this.container) : assert(widget != null);
 
   final Widget widget;
   final html.Element container;
@@ -62,9 +61,9 @@ class _BuildRoot extends BuildRoot {
 }
 
 abstract class VNode extends BuildRoot {
-  BuildRoot parent;
-
   VNode(this.parent);
+
+  BuildRoot parent;
 
   html.Node get node;
 
@@ -75,6 +74,7 @@ abstract class VNode extends BuildRoot {
 
   VNode update(Widget newWidget);
 
+  @override
   void markDirty() {
     if (!isDirty) {
       isDirty = true;
@@ -103,16 +103,19 @@ abstract class VNode extends BuildRoot {
 }
 
 abstract class VSingleChildNode<W extends Widget> extends VNode {
+  VSingleChildNode(this.widget, BuildRoot parent) : super(parent);
+
+  @override
   W widget;
+  @override
   html.Element node;
   VNode child;
 
-  VSingleChildNode(this.widget, BuildRoot parent)
-      : super(parent);
-
   @override
   VNode update(Widget newWidget) {
-    if (!hasDirtyChild && newWidget == widget) return this;
+    if (!hasDirtyChild && newWidget == widget) {
+      return this;
+    }
     hasDirtyChild = false;
     if (newWidget is W) {
       if (!isDirty && newWidget == widget) {
@@ -120,8 +123,7 @@ abstract class VSingleChildNode<W extends Widget> extends VNode {
       } else {
         isDirty = false;
         widget = newWidget;
-        child = updateAndReturnChild(newWidget);
-        child.parent = this;
+        child = updateAndReturnChild(newWidget)..parent = this;
         node = child.node;
       }
       return this;

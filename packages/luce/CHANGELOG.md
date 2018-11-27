@@ -1,3 +1,6 @@
+## 0.0.9
+- Introduce more linter rules.
+
 ## 0.0.8
 - Extensive code reorganization.
 - Remove fake DOM.

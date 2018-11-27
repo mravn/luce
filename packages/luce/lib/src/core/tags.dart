@@ -1,15 +1,17 @@
 import 'dart:html';
+import 'package:meta/meta.dart';
+
 import 'vdom.dart';
 
 class Tag extends Widget {
-  final String tag;
-  final List<Widget> children;
-
   const Tag({
-    this.tag,
+    @required this.tag,
     this.children = const <Widget>[],
   })  : assert(tag != null),
         assert(children != null);
+
+  final String tag;
+  final List<Widget> children;
 
   void applyClasses(Set<String> classes) {}
 
@@ -25,24 +27,29 @@ class Tag extends Widget {
 }
 
 class VTag extends VNode {
-  Tag widget;
-  Element node;
-  List<VNode> children;
-
   VTag(this.widget, BuildRoot parent) : super(parent) {
     node = document.createElement(widget.tag);
-    widget.applyAttributes(node.attributes);
-    widget.applyClasses(node.classes);
-    widget.applyData(node.dataset);
-    children = widget.children.map((w) => w.createVNode(this)).toList();
-    if (!children.isEmpty) {
-      node.insertAllBefore(children.map((child) => child.node), null);
+    widget
+      ..applyAttributes(node.attributes)
+      ..applyClasses(node.classes)
+      ..applyData(node.dataset);
+    children = widget.children.map((Widget w) => w.createVNode(this)).toList();
+    if (children.isNotEmpty) {
+      node.insertAllBefore(children.map((VNode child) => child.node), null);
     }
   }
 
   @override
+  Tag widget;
+  @override
+  Element node;
+  List<VNode> children;
+
+  @override
   VNode update(Widget newWidget) {
-    if (!hasDirtyChild && newWidget == widget) return this;
+    if (!hasDirtyChild && newWidget == widget) {
+      return this;
+    }
     hasDirtyChild = false;
     if (newWidget is Tag && newWidget.tag == widget.tag) {
       void updateChild(int oldIndex, int newIndex) {
@@ -66,18 +73,22 @@ class VTag extends VNode {
           i += 1;
         }
         if (i < newEnd) {
-          final Node refChild = (i == children.length) ? null : children[i].node;
+          final Node refChild =
+              (i == children.length) ? null : children[i].node;
           // insert new nodes
           children.insertAll(
               i,
               Iterable<VNode>.generate(
                 newEnd - i,
-                (j) => newWidget.children[i + j].createVNode(this),
+                (int j) => newWidget.children[i + j].createVNode(this),
               ));
-          node.insertAllBefore(children.sublist(i, newEnd).map((x) => x.node), refChild);
+          node.insertAllBefore(
+            children.sublist(i, newEnd).map((VNode child) => child.node),
+            refChild,
+          );
         } else if (i < oldEnd) {
           // delete old nodes
-          for (final child in children.sublist(i, oldEnd)) {
+          for (final VNode child in children.sublist(i, oldEnd)) {
             child.node.remove();
             child.invalidate();
           }
@@ -85,12 +96,16 @@ class VTag extends VNode {
         }
       }
 
-      newWidget.applyAttributes(node.attributes);
-      newWidget.applyClasses(node.classes);
-      newWidget.applyData(node.dataset);
+      newWidget
+        ..applyAttributes(node.attributes)
+        ..applyClasses(node.classes)
+        ..applyData(node.dataset);
       if (newWidget == widget) {
-        for (int i = 0, n = children.length; i < n; i++) {
-          if (children[i].hasDirtyChild) updateChild(i, i);
+        final int n = children.length;
+        for (int i = 0; i < n; i++) {
+          if (children[i].hasDirtyChild) {
+            updateChild(i, i);
+          }
         }
       } else {
         final int m = newWidget.children.length;
@@ -101,7 +116,9 @@ class VTag extends VNode {
         // preserve prefix with unchanged widgets
         int i = 0;
         while (i < m && i < n && newWidget.children[i] == children[i].widget) {
-          if (children[i].hasDirtyChild) updateChild(i, i);
+          if (children[i].hasDirtyChild) {
+            updateChild(i, i);
+          }
           i += 1;
         }
         print('preserved prefix length: $i');
@@ -112,7 +129,9 @@ class VTag extends VNode {
             i + k < n &&
             newWidget.children[m - 1 - k] == children[n - 1 - k].widget) {
           k += 1;
-          if (children[n - k].hasDirtyChild) updateChild(n - k, m - k);
+          if (children[n - k].hasDirtyChild) {
+            updateChild(n - k, m - k);
+          }
         }
         print('preserved suffix length: $k');
 
@@ -143,17 +162,17 @@ class VTag extends VNode {
 }
 
 class Img extends Tag {
-  final String src;
-  final String alt;
-  final int width;
-  final int height;
-
   const Img({
     this.src,
     this.alt,
     this.width,
     this.height,
   }) : super(tag: 'img');
+
+  final String src;
+  final String alt;
+  final int width;
+  final int height;
 
   @override
   void applyAttributes(Map<String, String> attributes) {

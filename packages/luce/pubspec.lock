@@ -147,7 +147,7 @@ packages:
       path: "../luce_test"
       relative: true
     source: path
-    version: "0.0.2"
+    version: "0.0.4"
   matcher:
     dependency: transitive
     description:

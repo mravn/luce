@@ -16,7 +16,7 @@ void main() {
     });
 
     test('sets top-level element', () async {
-      mount(const Div([Txt('hello'), Txt('world')]), document.body);
+      mount(const Div(<Widget>[Txt('hello'), Txt('world')]), document.body);
 
       await rendering();
 
@@ -25,7 +25,7 @@ void main() {
         document.body.children[0],
         isElement(
           'div',
-          hasChildren(equals([
+          hasChildren(equals(<Matcher>[
             isText(equals('hello')),
             isText(equals('world')),
           ])),
@@ -41,19 +41,25 @@ void main() {
       expect(document.body.children, hasLength(1));
       expect(
         document.body.children[0],
-        isElement('img', hasAttributes(equals({'src': 'hello.png'}))),
+        isElement(
+          'img',
+          hasAttributes(equals(<String, String>{'src': 'hello.png'})),
+        ),
       );
     });
 
     test('sets top-level element with supplied attributes', () async {
-      mount(Flag(className: 'hello', when: true, child: Div()), document.body);
+      mount(
+        Flag(className: 'hello', when: true, child: const Div()),
+        document.body,
+      );
 
       await rendering();
 
       expect(document.body.children, hasLength(1));
       expect(
         document.body.children[0],
-        isElement('div', hasClasses(equals(['hello']))),
+        isElement('div', hasClasses(equals(<String>['hello']))),
       );
     });
 
@@ -67,7 +73,7 @@ void main() {
         document.body.children[0],
         isElement(
           'div',
-          hasChildren(equals([
+          hasChildren(equals(<Matcher>[
             isText(equals('hello')),
             isElement('br'),
             isText(equals('0')),
@@ -88,7 +94,7 @@ void main() {
     });
 
     test('updates top-level element on remount', () async {
-      mount(const Div([Txt('hello'), Txt('world')]), document.body);
+      mount(const Div(<Widget>[Txt('hello'), Txt('world')]), document.body);
 
       mount(const Txt('42'), document.body);
       await rendering();
@@ -102,8 +108,7 @@ void main() {
       mount(CounterComponent(counter), document.body);
       await rendering();
 
-      counter.up();
-      counter.up();
+      counter..up()..up();
       await rendering();
       counter.up();
       await rendering();
@@ -113,7 +118,7 @@ void main() {
         document.body.children[0],
         isElement(
           'div',
-          hasChildren(equals([
+          hasChildren(equals(<Matcher>[
             anything,
             anything,
             isText(equals('3')),
@@ -127,8 +132,7 @@ void main() {
       mount(ListCounterComponent(Counter(), counter), document.body);
       await rendering();
 
-      counter.up();
-      counter.up();
+      counter..up()..up();
       await rendering();
       counter.up();
       await rendering();
@@ -138,7 +142,7 @@ void main() {
         document.body.children[0],
         isElement(
           'div',
-          hasChildren(equals([
+          hasChildren(equals(<Matcher>[
             isText(equals('0')),
             isText(equals('1')),
             isText(equals('2')),
@@ -152,8 +156,7 @@ void main() {
       mount(ListCounterComponent(Counter(), counter), document.body);
       await rendering();
 
-      counter.down();
-      counter.down();
+      counter..down()..down();
       await rendering();
       counter.down();
       await rendering();
@@ -163,7 +166,7 @@ void main() {
         document.body.children[0],
         isElement(
           'div',
-          hasChildren(equals([
+          hasChildren(equals(<Matcher>[
             isText(equals('0')),
             isText(equals('1')),
           ])),
@@ -173,11 +176,11 @@ void main() {
 
     test('updates child insertion at start', () async {
       final Counter counter = Counter.startingAt(5);
-      mount(ListCounterComponent(counter, Counter.startingAt(6)), document.body);
+      mount(
+          ListCounterComponent(counter, Counter.startingAt(6)), document.body);
       await rendering();
 
-      counter.down();
-      counter.down();
+      counter..down()..down();
       await rendering();
       counter.down();
       await rendering();
@@ -187,7 +190,7 @@ void main() {
         document.body.children[0],
         isElement(
           'div',
-          hasChildren(equals([
+          hasChildren(equals(<Matcher>[
             isText(equals('2')),
             isText(equals('3')),
             isText(equals('4')),
@@ -199,11 +202,11 @@ void main() {
 
     test('updates child removal at start', () async {
       final Counter counter = Counter();
-      mount(ListCounterComponent(counter, Counter.startingAt(5)), document.body);
+      mount(
+          ListCounterComponent(counter, Counter.startingAt(5)), document.body);
       await rendering();
 
-      counter.up();
-      counter.up();
+      counter..up()..up();
       await rendering();
       counter.up();
       await rendering();
@@ -213,7 +216,7 @@ void main() {
         document.body.children[0],
         isElement(
           'div',
-          hasChildren(equals([
+          hasChildren(equals(<Matcher>[
             isText(equals('3')),
             isText(equals('4')),
           ])),
@@ -224,14 +227,14 @@ void main() {
 }
 
 class CounterComponent extends Component {
-  final Counter counter;
-
   const CounterComponent(this.counter);
+
+  final Counter counter;
 
   @override
   Widget build(BuildContext context) {
     context.rebuildOn(counter.changes);
-    return Div([
+    return Div(<Widget>[
       const Txt('hello'),
       const Br(),
       Txt('${counter.value}'),
@@ -240,11 +243,11 @@ class CounterComponent extends Component {
 }
 
 class Counter with ChangeNotification {
-  int _value = 0;
-
   Counter();
 
   Counter.startingAt(int value) : _value = value;
+
+  int _value = 0;
 
   void up() {
     _value += 1;
@@ -269,7 +272,7 @@ const Txt six = Txt('6');
 const Txt seven = Txt('7');
 const Txt eight = Txt('8');
 const Txt nine = Txt('9');
-const List<Txt> numbers = [
+const List<Txt> numbers = <Txt>[
   zero,
   one,
   two,
@@ -283,15 +286,14 @@ const List<Txt> numbers = [
 ];
 
 class ListCounterComponent extends Component {
+  const ListCounterComponent(this.startCounter, this.endCounter);
+
   final Counter startCounter;
   final Counter endCounter;
 
-  const ListCounterComponent(this.startCounter, this.endCounter);
-
   @override
   Widget build(BuildContext context) {
-    context.rebuildOn(startCounter.changes);
-    context.rebuildOn(endCounter.changes);
+    context..rebuildOn(startCounter.changes)..rebuildOn(endCounter.changes);
     return Div(numbers.sublist(startCounter.value, endCounter.value));
   }
 }

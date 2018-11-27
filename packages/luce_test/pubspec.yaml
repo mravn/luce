@@ -3,11 +3,11 @@ description: Test package for luce apps.
 homepage: https://github.com/mravn/luce
 author: Mikkel Nygaard Ravn <mikkel.nygaard.ravn@gmail.com>
 license: MIT
-version: 0.0.3
+version: 0.0.4
 
 environment:
   sdk: '>=2.1.0 <3.0.0'
 
 dependencies:
   test: ^1.5.1
-  luce: ^0.0.8
+  luce: ^0.0.9

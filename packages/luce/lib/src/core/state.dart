@@ -4,12 +4,12 @@ abstract class BuildContext extends BuildRoot {
   void rebuildOn(AddListener addListener);
 }
 
-typedef void Listener();
-typedef void RemoveListener();
-typedef RemoveListener AddListener(Listener listener);
+typedef Listener = void Function();
+typedef RemoveListener = void Function();
+typedef AddListener = RemoveListener Function(Listener listener);
 
 mixin ChangeNotification {
-  final List<Listener> _listeners = [];
+  final List<Listener> _listeners = <Listener>[];
 
   void notify() {
     for (Listener listener in _listeners) {

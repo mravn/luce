@@ -1,5 +1,5 @@
-import 'vdom.dart';
 import 'state.dart';
+import 'vdom.dart';
 
 abstract class Component extends Widget {
   const Component();
@@ -11,12 +11,12 @@ abstract class Component extends Widget {
 }
 
 class VComponent extends VSingleChildNode<Component> implements BuildContext {
-  final List<RemoveListener> _removeListeners = <RemoveListener>[];
-
   VComponent(Component widget, BuildRoot parent) : super(widget, parent) {
     child = widget.build(this).createVNode(parent);
     node = child.node;
   }
+
+  final List<RemoveListener> _removeListeners = <RemoveListener>[];
 
   @override
   VNode updateAndReturnChild(Component newWidget) {
@@ -24,6 +24,7 @@ class VComponent extends VSingleChildNode<Component> implements BuildContext {
     return child.update(newWidget.build(this));
   }
 
+  @override
   void rebuildOn(AddListener addListener) {
     _removeListeners.add(addListener(markDirty));
   }

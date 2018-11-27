@@ -1,9 +1,9 @@
 import 'vdom.dart';
 
 class Attributes extends Widget {
-  final Widget child;
-
   const Attributes(this.child) : assert(child != null);
+
+  final Widget child;
 
   void applyAttributes(Map<String, String> attributes) {}
 
@@ -29,9 +29,9 @@ class VAttributes extends VSingleChildNode<Attributes> {
 }
 
 class Dataset extends Widget {
-  final Widget child;
-
   const Dataset(this.child) : assert(child != null);
+
+  final Widget child;
 
   void applyDataset(Map<String, String> dataset) {}
 
@@ -57,9 +57,9 @@ class VDataset extends VSingleChildNode<Dataset> {
 }
 
 class Classes extends Widget {
-  final Widget child;
-
   const Classes(this.child) : assert(child != null);
+
+  final Widget child;
 
   void applyClasses(Set<String> classes) {}
 
@@ -85,14 +85,14 @@ class VClasses extends VSingleChildNode<Classes> {
 }
 
 class Flag extends Classes {
-  final String className;
-  final bool when;
-
   Flag({
     this.className,
     this.when,
     Widget child,
   }) : super(child);
+
+  final String className;
+  final bool when;
 
   @override
   void applyClasses(Set<String> classes) {
