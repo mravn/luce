@@ -1,6 +1,6 @@
 import 'dart:html';
 
-import 'vdom.dart';
+import '../core/vdom.dart';
 
 class Attributes extends Widget {
   const Attributes(this.child) : assert(child != null);

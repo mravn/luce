@@ -1,4 +1,4 @@
-import 'package:luce/luce.dart';
+import 'package:luce/std.dart';
 
 void main() {
   final Counter counter = Counter();

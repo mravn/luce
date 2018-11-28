@@ -3,7 +3,7 @@ import 'dart:html';
 
 import 'package:meta/meta.dart';
 
-import 'vdom.dart';
+import '../core/vdom.dart';
 
 typedef MouseEventHandler = void Function(MouseEvent event);
 

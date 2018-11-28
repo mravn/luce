@@ -1,3 +1,6 @@
+## 0.0.11
+- Break up code in core and std libraries.
+
 ## 0.0.10
 - Begun mouse and keyboard event support.
 - On-the-fly wrapping of Text nodes in Span elements as needed.

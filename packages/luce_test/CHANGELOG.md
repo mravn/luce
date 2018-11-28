@@ -1,3 +1,7 @@
+## 0.0.5
+
+- Upgrade to luce 0.0.11.
+
 ## 0.0.4
 
 - Introduce more linter rules.

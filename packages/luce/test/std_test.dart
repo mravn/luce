@@ -109,10 +109,7 @@ void main() {
       await rendering();
 
       expect(document.body.childNodes, hasLength(1));
-      expect(
-        document.body.childNodes[0],
-        isText(equals('7')),
-      );
+      expect(document.body.childNodes[0], isText(equals('7')));
     });
 
     test('updates top-level text on remount with other widget', () async {
