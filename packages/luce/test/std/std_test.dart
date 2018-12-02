@@ -16,7 +16,10 @@ void main() {
     });
 
     test('sets top-level element', () async {
-      mount(const Div(<Widget>[Txt('hello'), Txt('world')]), document.body);
+      mount(
+        const Div(<Widget>[Txt('hello'), Txt('world')]),
+        document.body,
+      );
 
       await rendering();
 
@@ -124,7 +127,10 @@ void main() {
     });
 
     test('updates top-level element on remount', () async {
-      mount(const Div(<Widget>[Txt('hello'), Txt('world')]), document.body);
+      mount(
+        const Div(<Widget>[Txt('hello'), Txt('world')]),
+        document.body,
+      );
 
       mount(const Txt('42'), document.body);
       await rendering();

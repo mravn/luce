@@ -1,17 +1,13 @@
 import 'dart:html';
-import 'package:meta/meta.dart';
-
+import 'package:luce/state.dart';
 import 'vdom.dart';
 
-class Tag extends Widget {
-  const Tag({
-    @required this.tag,
-    this.children = const <Widget>[],
-  })  : assert(tag != null),
-        assert(children != null);
+abstract class Tag extends Widget {
+  const Tag(this.tag) : assert(tag != null);
 
   final String tag;
-  final List<Widget> children;
+
+  List<Widget> get children;
 
   void applyClasses(Set<String> classes) {}
 
@@ -35,8 +31,7 @@ class VTag extends VNode {
       ..applyData(element.dataset);
     children = widget.children.map((Widget w) => w.createVNode(this)).toList();
     if (children.isNotEmpty) {
-      element.insertAllBefore(
-          children.map((VNode child) => child.node), null);
+      element.insertAllBefore(children.map((VNode child) => child.node), null);
     }
   }
 
@@ -55,10 +50,10 @@ class VTag extends VNode {
     if (newWidget is Tag && newWidget.tag == widget.tag) {
       void updateChild(int oldIndex, int newIndex) {
         final VNode oldChild = children[oldIndex];
+        final Node oldNode = oldChild.node;
         final VNode newChild = oldChild.update(newWidget.children[newIndex]);
         if (newChild != oldChild) {
           final Node newNode = newChild.node;
-          final Node oldNode = oldChild.node;
           if (newNode != oldNode) {
             oldNode.replaceWith(newNode);
           }
@@ -153,4 +148,7 @@ class VTag extends VNode {
     }
     return super.invalidate();
   }
+
+  @override
+  String toString() => '$runtimeType[$widget]';
 }

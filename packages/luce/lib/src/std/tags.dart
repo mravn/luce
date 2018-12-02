@@ -1,35 +1,41 @@
-import '../core/tag.dart';
-import '../core/vdom.dart';
+import 'package:luce/vdom.dart';
 
 class Div extends Tag {
-  const Div([List<Widget> children = const <Widget>[]])
-      : super(
-    tag: 'div',
-    children: children,
-  );
-}
-
-class FocusableDiv extends Tag {
-  const FocusableDiv(this.tabIndex, [List<Widget> children = const <Widget>[]])
-      : super(
-    tag: 'div',
-    children: children,
-  );
-
-  final int tabIndex;
+  const Div([this.children = const <Widget>[]])
+      : super('div');
 
   @override
-  void applyAttributes(Map<String, String> attributes) {
-    _setAttribute(attributes, 'tabIndex', tabIndex?.toString());
-  }
+  final List<Widget> children;
+}
+
+class Span extends Tag {
+  const Span([this.children = const <Widget>[]])
+      : super('span');
+
+  @override
+  final List<Widget> children;
+}
+
+class P extends Tag {
+  const P([this.children = const <Widget>[]])
+      : super('p');
+
+  @override
+  final List<Widget> children;
 }
 
 class Br extends Tag {
-  const Br() : super(tag: 'br');
+  const Br() : super('br');
+
+  @override
+  List<Widget> get children => const <Widget>[];
 }
 
 class Hr extends Tag {
-  const Hr() : super(tag: 'hr');
+  const Hr() : super('hr');
+
+  @override
+  List<Widget> get children => const <Widget>[];
 }
 
 class Img extends Tag {
@@ -38,12 +44,15 @@ class Img extends Tag {
     this.alt,
     this.width,
     this.height,
-  }) : super(tag: 'img');
+  }) : super('img');
 
   final String src;
   final String alt;
   final int width;
   final int height;
+
+  @override
+  List<Widget> get children => const <Widget>[];
 
   @override
   void applyAttributes(Map<String, String> attributes) {
@@ -52,6 +61,18 @@ class Img extends Tag {
     _setAttribute(attributes, 'width', width?.toString());
     _setAttribute(attributes, 'height', height?.toString());
   }
+}
+
+typedef Builder = Widget Function();
+
+Widget toWidget(dynamic x) {
+  if (x is Widget) {
+    return x;
+  }
+  if (x is Builder) {
+    return x();
+  }
+  return Txt('$x');
 }
 
 void _setAttribute(Map<String, String> attributes, String key, String value) {

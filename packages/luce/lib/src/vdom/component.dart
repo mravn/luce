@@ -1,5 +1,5 @@
 import 'dart:html';
-import 'state.dart';
+import 'package:luce/src/state/state.dart';
 import 'vdom.dart';
 
 abstract class Component extends Widget {
@@ -54,6 +54,7 @@ class VComponent extends VNode implements BuildContext {
 
   void _refreshChildNode() {
     if (_childNode != child.node) {
+      _childNode.replaceWith(child.node);
       _childNode = child.node;
       _childElement = null;
     }
@@ -83,4 +84,7 @@ class VComponent extends VNode implements BuildContext {
     }
     return super.invalidate();
   }
+
+  @override
+  String toString() => '$runtimeType[$widget]';
 }

@@ -1,3 +1,9 @@
+## 0.0.12
+- Separate state-handling utilities in their own library
+  that does not depend on `dart:html`.
+- Fixed bugs with invalidated vnodes being used during update
+  operations.
+
 ## 0.0.11
 - Break up code in core and std libraries.
 

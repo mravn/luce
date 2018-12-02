@@ -1,6 +1,5 @@
 import 'dart:html';
-
-import '../core/vdom.dart';
+import 'package:luce/vdom.dart';
 
 class Attributes extends Widget {
   const Attributes(this.child) : assert(child != null);
@@ -33,7 +32,7 @@ class VAttributes extends VSingleChildElement<Attributes> {
   }
 
   void _applyAttributes(Attributes widget, Element element) {
-    widget.applyAttributes(element.dataset);
+    widget.applyAttributes(element.attributes);
   }
 }
 
@@ -104,6 +103,29 @@ class VClasses extends VSingleChildElement<Classes> {
 
   void _applyClasses(Classes widget, Element element) {
     widget.applyClasses(element.classes);
+  }
+}
+
+class Classed extends Classes {
+  const Classed(this.className, Widget child): super(child);
+
+  final String className;
+
+  @override
+  void applyClasses(Set<String> classes) {
+    classes.add(className);
+  }
+}
+
+class Attributed extends Attributes {
+  const Attributed(this.key, this.value, Widget child): super(child);
+  
+  final String key;
+  final String value;
+
+  @override
+  void applyAttributes(Map<String, String> attributes) {
+    attributes[key] = value;
   }
 }
 

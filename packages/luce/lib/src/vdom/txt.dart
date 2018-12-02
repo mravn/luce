@@ -1,4 +1,5 @@
 import 'dart:html';
+import 'package:luce/state.dart';
 import 'vdom.dart';
 
 class Txt extends Widget {
@@ -64,4 +65,7 @@ class VText extends VNode {
     text = null;
     return super.invalidate();
   }
+
+  @override
+  String toString() => '$runtimeType[$widget, $text, $_span]';
 }

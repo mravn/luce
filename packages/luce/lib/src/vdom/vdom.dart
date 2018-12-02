@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:html';
+import 'package:luce/state.dart';
 
 void mount(Widget widget, Element container) {
   _BuildRoot(widget, container).markDirty();
@@ -9,12 +10,6 @@ abstract class Widget {
   const Widget();
 
   VNode createVNode(BuildRoot parent);
-}
-
-abstract class BuildRoot {
-  void markDirty();
-
-  void markDirtyChild();
 }
 
 class _BuildRoot extends BuildRoot {

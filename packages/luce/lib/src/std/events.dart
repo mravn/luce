@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'dart:html';
 
+import 'package:luce/vdom.dart';
 import 'package:meta/meta.dart';
-
-import '../core/vdom.dart';
 
 typedef MouseEventHandler = void Function(MouseEvent event);
 
