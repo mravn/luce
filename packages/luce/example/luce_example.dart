@@ -6,7 +6,7 @@ void main() {
 
   mount(widget, querySelector('#output'));
 
-  window.onKeyPress.listen((KeyboardEvent event) {
+  window.onKeyPress.listen((event) {
     counter.up();
   });
 }
@@ -31,14 +31,13 @@ class CounterComponent extends Component {
   Widget build(BuildContext context) {
     context.rebuildOn(counter.changes);
     return MouseEvents(
-      onClick: (MouseEvent e) => counter.up(),
-      child: Div(<Widget>[
+      onClick: (e) => counter.up(),
+      child: Div(children: [
         const Txt('Your Luce app is running.'),
         const Br(),
-        Flag(
-          className: 'high',
-          when: counter.value > 7,
-          child: Txt('Counter value is ${counter.value}'),
+        Div(
+          classes: (counter.value > 7) ? const ['high'] : const [],
+          children: [Txt('Counter value is ${counter.value}')],
         ),
       ]),
     );

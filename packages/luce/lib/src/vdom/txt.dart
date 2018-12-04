@@ -33,6 +33,7 @@ class VText extends VNode {
     }
     return _span;
   }
+
   Element _span;
 
   @override

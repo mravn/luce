@@ -6,7 +6,7 @@ linter:
     - always_put_control_body_on_new_line
     - always_put_required_named_parameters_first
     - always_require_non_null_named_parameters
-    - always_specify_types
+    # - always_specify_types
     - annotate_overrides
     # - avoid_annotating_with_dynamic
     - avoid_as
@@ -34,7 +34,7 @@ linter:
     - avoid_single_cascade_in_expression_statements
     - avoid_slow_async_io
     - avoid_types_as_parameter_names
-    # - avoid_types_on_closure_parameters
+    - avoid_types_on_closure_parameters
     - avoid_unused_constructor_parameters
     - avoid_void_async
     - await_only_futures

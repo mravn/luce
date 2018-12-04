@@ -1,41 +1,83 @@
 import 'package:luce/vdom.dart';
 
 class Div extends Tag {
-  const Div([this.children = const <Widget>[]])
-      : super('div');
+  const Div({
+    this.attributes = const <String, String>{},
+    this.classes = const <String>[],
+    this.dataset = const <String, String>{},
+    this.children = const <Widget>[],
+  }) : super('div');
 
+  @override
+  final Map<String, String> attributes;
+  @override
+  final List<String> classes;
+  @override
+  final Map<String, String> dataset;
   @override
   final List<Widget> children;
 }
 
 class Span extends Tag {
-  const Span([this.children = const <Widget>[]])
-      : super('span');
+  const Span({
+    this.attributes = const <String, String>{},
+    this.classes = const <String>[],
+    this.dataset = const <String, String>{},
+    this.children = const <Widget>[],
+  }) : super('span');
 
   @override
-  final List<Widget> children;
-}
-
-class P extends Tag {
-  const P([this.children = const <Widget>[]])
-      : super('p');
-
+  final Map<String, String> attributes;
+  @override
+  final List<String> classes;
+  @override
+  final Map<String, String> dataset;
   @override
   final List<Widget> children;
 }
 
 class Br extends Tag {
   const Br() : super('br');
-
-  @override
-  List<Widget> get children => const <Widget>[];
 }
 
 class Hr extends Tag {
   const Hr() : super('hr');
+}
+
+class H1 extends Tag {
+  const H1(this.text) : super('h1');
+
+  final String text;
 
   @override
-  List<Widget> get children => const <Widget>[];
+  List<Widget> get children => <Widget>[Txt(text)];
+}
+
+class H2 extends Tag {
+  const H2(this.text) : super('h2');
+
+  final String text;
+
+  @override
+  List<Widget> get children => <Widget>[Txt(text)];
+}
+
+class H3 extends Tag {
+  const H3(this.text) : super('h3');
+
+  final String text;
+
+  @override
+  List<Widget> get children => <Widget>[Txt(text)];
+}
+
+class P extends Tag {
+  const P(this.text) : super('p');
+
+  final String text;
+
+  @override
+  List<Widget> get children => <Widget>[Txt(text)];
 }
 
 class Img extends Tag {
@@ -55,32 +97,10 @@ class Img extends Tag {
   List<Widget> get children => const <Widget>[];
 
   @override
-  void applyAttributes(Map<String, String> attributes) {
-    _setAttribute(attributes, 'src', src);
-    _setAttribute(attributes, 'alt', alt);
-    _setAttribute(attributes, 'width', width?.toString());
-    _setAttribute(attributes, 'height', height?.toString());
-  }
-}
-
-typedef Builder = Widget Function();
-
-Widget toWidget(dynamic x) {
-  if (x is Widget) {
-    return x;
-  }
-  if (x is Builder) {
-    return x();
-  }
-  return Txt('$x');
-}
-
-void _setAttribute(Map<String, String> attributes, String key, String value) {
-  assert(!key.startsWith('data-'));
-  assert(key != 'class');
-  if (value == null) {
-    attributes.remove(key);
-  } else {
-    attributes[key] = value;
-  }
+  Map<String, String> get attributes => <String, String>{
+        'src': src,
+        'alt': alt,
+        'width': width?.toString(),
+        'height': height?.toString(),
+      };
 }

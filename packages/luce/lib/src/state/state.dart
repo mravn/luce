@@ -49,7 +49,7 @@ mixin ChangeNotification {
 
 class LatestEvent<E> with ChangeNotification {
   LatestEvent();
-  LatestEvent.startingWith(E event): _latest = event;
+  LatestEvent.startingWith(E event) : _latest = event;
 
   E _latest;
   E get latest => _latest;

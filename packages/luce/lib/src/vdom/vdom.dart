@@ -117,8 +117,8 @@ abstract class VSingleChildElement<W extends Widget> extends VNode {
         child.update(child.widget);
       } else {
         isDirty = false;
-        widget = newWidget;
         child = updateAndReturnNewChild(newWidget)..parent = this;
+        widget = newWidget;
         element = child.element;
       }
       return this;
