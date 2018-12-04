@@ -1,3 +1,6 @@
+## 0.0.13
+- Simplified approach to attributes and class names.
+
 ## 0.0.12
 - Separate state-handling utilities in their own library
   that does not depend on `dart:html`.
